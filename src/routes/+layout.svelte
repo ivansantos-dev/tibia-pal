@@ -17,8 +17,6 @@
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				<Avatar
-					border="border-4 	border-surface-300-600-token hover:!border-primary-500"
-					cursor="cursor-pointer"
 					width="w-10"
 				/>
 			</svelte:fragment>
