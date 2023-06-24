@@ -24,6 +24,7 @@
 		"eslint": "^8.28.0",
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-svelte": "^2.26.0",
+		"firebase": "^9.22.2",
 		"highlight.js": "^11.8.0",
 		"postcss": "^8.4.24",
 		"prettier": "^2.8.0",
