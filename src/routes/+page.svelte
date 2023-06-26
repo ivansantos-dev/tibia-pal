@@ -49,7 +49,7 @@
 <Modal />
 <div class="container h-full mx-auto flex justify-center items-center">
 	<div class="space-y-5">
-		<h1 class="h1">Pals</h1>
+		<h1 class="h1">Former Names</h1>
 
 		<div class="table-container">
 			<table class="table hover">

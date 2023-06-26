@@ -1,6 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { doc, setDoc, getFirestore, collection, getDocs, Timestamp } from 'firebase/firestore/lite';
 import { NameState } from "./tibia_client";
+import { type User, onAuthStateChanged, signInWithEmailAndPassword, getAuth, signOut } from "firebase/auth";
+import { writable } from 'svelte/store'
 
 const firebaseConfig = {
   apiKey: "AIzaSyA7Zj56RE-zq3NuVU1QeZuXP8_RPFxlNRY",
@@ -11,10 +13,20 @@ const firebaseConfig = {
   appId: "1:244551684591:web:ec0b7e554422245ff7a61a"
 };
 
+export const userStore: any = writable(null)
+
 export const app = initializeApp(firebaseConfig);
-
-
 const db = getFirestore(app);
+const auth = getAuth(app)
+
+onAuthStateChanged(auth, (user) => {
+  console.log('onAuthStateChanged', user)
+  if (user) {
+      userStore.set(user);
+  } else {
+      userStore.set(null)
+  }
+});
 
 // Get a list of cities from your database
 export async function getExpiringNames(): Promise<{}> {
@@ -32,4 +44,13 @@ export async function addExpiringName(name: string) {
     status: NameState[NameState.expiring],
     nextCheck: new Date(now + 1 * 60 * 60 * 1000), 
   });
+}
+
+
+export async function login(email: string, password: string) {
+  await signInWithEmailAndPassword(auth, email, password)
+}
+
+export async function logout() {
+  await signOut(auth)
 }
