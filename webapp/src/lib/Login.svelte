@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {login} from '$lib/firebase'
+	import { login } from '$lib/firebase'
 	let email = ''
 	let password = ''
 
