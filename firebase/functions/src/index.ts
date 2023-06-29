@@ -16,7 +16,10 @@ type ExpiringName = {
 async function getExpiringNames(): Promise<ExpiringName[]> {
 	const names: ExpiringName[] = []
 
-	const snapshot = await db.collection("expiring_names").where('status', '==', 'expiring').get()
+	const snapshot = await db.collection("expiring_names")
+		.where('status', '==', 'expiring')
+		.where('nextCheck', '<', new Date())
+		.get()
 	snapshot.forEach((doc: DocumentSnapshot)=> names.push(doc.data() as ExpiringName));
 
 	return names
