@@ -3,9 +3,8 @@
 	import { Modal, modalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings, ModalComponent } from '@skeletonlabs/skeleton';
 	import AddNewCharacter from '$lib/AddNewCharacter.svelte';
-	import {isCharacterNameExpiring, NameState } from '$lib/tibia_client';
-	import { deleteExpiringName, addExpiringName, getExpiringNames } from '$lib/firebase'
-
+	import { isCharacterNameExpiring, NameState } from '$lib/tibia_client';
+	import { deleteExpiringName, addExpiringName, getExpiringNames } from '$lib/firebase';
 
 	let searchCharacterName = '';
 	let sourceData = [];
@@ -21,35 +20,33 @@
 		component: modalComponent
 	};
 
-
 	async function loadOnlineCharacters() {
-		sourceData = await getExpiringNames()
+		sourceData = await getExpiringNames();
 	}
 
 	async function addNewCharacter() {
 		//modalStore.trigger(modal);
 
-		const nameState = await isCharacterNameExpiring(searchCharacterName)
+		const nameState = await isCharacterNameExpiring(searchCharacterName);
 		if (nameState !== NameState.expiring) {
-			alert(`${searchCharacterName} is ${NameState[nameState]}!`)
-			return
+			alert(`${searchCharacterName} is ${NameState[nameState]}!`);
+			return;
 		}
 
-		await addExpiringName(searchCharacterName)
-		loadOnlineCharacters()
-		searchCharacterName = ''
+		await addExpiringName(searchCharacterName);
+		loadOnlineCharacters();
+		searchCharacterName = '';
 	}
 
 	async function remove(idx: number) {
-		const name = sourceData[idx]
-		await deleteExpiringName(name.name)
+		const name = sourceData[idx];
+		await deleteExpiringName(name.name);
 		loadOnlineCharacters();
 	}
 
-	onMount(async() => {
+	onMount(async () => {
 		loadOnlineCharacters();
 	});
-
 </script>
 
 <Modal />
@@ -64,7 +61,7 @@
 						<th>Name</th>
 						<th>Status</th>
 						<th>Next Check</th>
-						<th></th>
+						<th />
 					</tr>
 				</thead>
 				<tbody>
@@ -73,8 +70,12 @@
 							<td>{row.name}</td>
 							<td>{row.status}</td>
 							<td>{row.nextCheck.toDate()}</td>
-							<td><button type="button" class="btn variant-filled" on:click={() => remove(i)}>Remove Track</button>
-						</tr>
+							<td
+								><button type="button" class="btn variant-filled" on:click={() => remove(i)}
+									>Remove Track</button
+								>
+							</td></tr
+						>
 					{/each}
 				</tbody>
 				<tfoot>
