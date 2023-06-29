@@ -22,6 +22,8 @@
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				{#if $userStore}
+					<a href='/'>Home</a>
+					<a href='/profile'>Profile</a>
 					<Logout />
 				{/if}
 			</svelte:fragment>

@@ -5,6 +5,7 @@ import {
 	getFirestore,
 	collection,
 	getDocs,
+	getDoc,
 	Timestamp,
 	deleteDoc
 } from 'firebase/firestore/lite';
@@ -16,7 +17,7 @@ import {
 	getAuth,
 	signOut
 } from 'firebase/auth';
-import { writable } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyA7Zj56RE-zq3NuVU1QeZuXP8_RPFxlNRY',
@@ -27,7 +28,7 @@ const firebaseConfig = {
 	appId: '1:244551684591:web:ec0b7e554422245ff7a61a'
 };
 
-export const userStore: any = writable(null);
+export const userStore: Writable<User | null> = writable(null);
 
 export const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -71,3 +72,19 @@ export async function login(email: string, password: string) {
 export async function logout() {
 	await signOut(auth);
 }
+
+export async function loadProfile() {
+	const uid = auth.currentUser!.uid
+	const docSnapshot = await getDoc(doc(db, 'users', uid))
+	return docSnapshot.data()
+}
+
+export async function saveNotificationEmails(emails: string) {
+	const uid = auth.currentUser!.uid
+	await setDoc(doc(db, 'users', uid), {
+		userUid: uid,
+		notificationEmails: emails,
+	});
+	
+}
+
