@@ -4,7 +4,7 @@
 	import type { ModalSettings, ModalComponent } from '@skeletonlabs/skeleton';
 	import AddNewCharacter from '$lib/AddNewCharacter.svelte';
 	import {isCharacterNameExpiring, NameState } from '$lib/tibia_client';
-	import { addExpiringName, getExpiringNames } from '$lib/firebase'
+	import { deleteExpiringName, addExpiringName, getExpiringNames } from '$lib/firebase'
 
 
 	let searchCharacterName = '';
@@ -40,6 +40,12 @@
 		searchCharacterName = ''
 	}
 
+	async function remove(idx: number) {
+		const name = sourceData[idx]
+		await deleteExpiringName(name.name)
+		loadOnlineCharacters();
+	}
+
 	onMount(async() => {
 		loadOnlineCharacters();
 	});
@@ -58,7 +64,8 @@
 						<th>Name</th>
 						<th>Status</th>
 						<th>Next Check</th>
-					</tr>
+						<th></th>
+					</tr>Search
 				</thead>
 				<tbody>
 					{#each sourceData as row, i}
@@ -66,6 +73,7 @@
 							<td>{row.name}</td>
 							<td>{row.status}</td>
 							<td>{row.nextCheck.toDate()}</td>
+							<td><button type="button" class="btn variant-filled" on:click={() => remove(i)}>Remove</button>
 						</tr>
 					{/each}
 				</tbody>
@@ -87,7 +95,7 @@
 									</div>
 									<div class="md:w-1/3">
 										<button type="button" class="btn variant-filled" on:click={addNewCharacter}
-											>Search</button
+											>Add</button
 										>
 									</div>
 								</div>
