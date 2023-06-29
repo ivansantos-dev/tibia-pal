@@ -65,7 +65,7 @@
 						<th>Status</th>
 						<th>Next Check</th>
 						<th></th>
-					</tr>Search
+					</tr>
 				</thead>
 				<tbody>
 					{#each sourceData as row, i}
@@ -73,7 +73,7 @@
 							<td>{row.name}</td>
 							<td>{row.status}</td>
 							<td>{row.nextCheck.toDate()}</td>
-							<td><button type="button" class="btn variant-filled" on:click={() => remove(i)}>Remove</button>
+							<td><button type="button" class="btn variant-filled" on:click={() => remove(i)}>Remove Track</button>
 						</tr>
 					{/each}
 				</tbody>
@@ -88,7 +88,7 @@
 												class="input"
 												id="inline-full-name"
 												type="text"
-												placeholder="Search for a pal"
+												placeholder="Search for an expiring name"
 												bind:value={searchCharacterName}
 											/>
 										</label>

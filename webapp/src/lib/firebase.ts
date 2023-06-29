@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { doc, setDoc, getFirestore, collection, getDocs, Timestamp } from 'firebase/firestore/lite';
+import { doc, setDoc, getFirestore, collection, getDocs, Timestamp, deleteDoc } from 'firebase/firestore/lite';
 import { NameState } from "./tibia_client";
 import { type User, onAuthStateChanged, signInWithEmailAndPassword, getAuth, signOut } from "firebase/auth";
 import { writable } from 'svelte/store'
@@ -46,6 +46,10 @@ export async function addExpiringName(name: string) {
   });
 }
 
+export async function deleteExpiringName(name: string) {
+  await deleteDoc(doc(db, "expiring_name", name));
+}
+
 
 export async function login(email: string, password: string) {
   await signInWithEmailAndPassword(auth, email, password)
@@ -54,3 +58,4 @@ export async function login(email: string, password: string) {
 export async function logout() {
   await signOut(auth)
 }
+
