@@ -49,7 +49,7 @@
 
 	async function remove(idx: number) {
 		const expiring_name = $expiringNamesStore[idx];
-		await expiringNamesStore.delete(expiring_name.name);
+		await expiringNamesStore.delete(expiring_name.id);
 	}
 
 	

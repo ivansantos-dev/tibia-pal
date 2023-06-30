@@ -37,7 +37,7 @@ export async function getCharacterFromTibia(name: string): Promise<TibiaApiChara
 	const apiFormerName: string = data.characters.character.former_names;
 	if (apiFormerName != undefined) {
 		formerNames = apiFormerName.map((name: string) => name.toLowerCase());
-		if (formerNames.includes(name)) {
+		if (formerNames.includes(lowerName)) {
 			nameState =  NameState.expiring;
 		}
 	}

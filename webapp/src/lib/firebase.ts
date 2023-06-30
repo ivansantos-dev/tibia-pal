@@ -13,6 +13,7 @@ import {
     DocumentSnapshot,
     QuerySnapshot,
     Timestamp,
+    addDoc,
 } from 'firebase/firestore';
 import { NameState } from './tibia_client';
 import {
@@ -36,6 +37,7 @@ const firebaseConfig = {
 
 
 type ExpiringName = {
+	id: string,
 	name: string,
 	status: string, 
 	nextCheck: Timestamp,
@@ -72,7 +74,7 @@ function createFriendListStore() {
 		subscribe,
 		add: async (name: string, world: string) =>  {
 			const uid = get(userStore)?.uid 
-			await setDoc(doc(db, 'friends', name), {
+			await addDoc(collection(db, 'friends'), {
 				name,
 				status: "offline",
 				world,
@@ -119,7 +121,7 @@ function createExpiringNameStore() {
 		add: async (name: string) => {
 			const uid = get(userStore)?.uid 
 		const now = new Date().getTime();
-		await setDoc(doc(db, 'expiring_names', name), {
+		await addDoc(collection(db, 'expiring_names'), {
 				name,
 				status: NameState[NameState.expiring],
 				nextCheck: new Date(now + 1 * 60 * 60 * 1000),
@@ -134,12 +136,12 @@ function createExpiringNameStore() {
 			const collections = collection(db, 'expiring_names');
 			const q = query(collections, where("userUid", "==", uid))
 			const docs = await getDocs(q);
-			const formerNames = docs.docs.map((doc) => doc.data() as ExpiringName);
+			const formerNames = docs.docs.map((doc) =>{ return {id:doc.id,...doc.data()} as ExpiringName});
 			set(formerNames)
 			unsubscribe = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
 				const names: ExpiringName[] = []
 				querySnapshot.forEach((doc: DocumentSnapshot) => {
-					names.push(doc.data() as ExpiringName)
+					names.push({id: doc.id, ...doc.data()} as ExpiringName)
 					}
 				);
 				set(names)
