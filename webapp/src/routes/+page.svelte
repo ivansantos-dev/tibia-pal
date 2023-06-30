@@ -1,13 +1,20 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { Modal, modalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings, ModalComponent } from '@skeletonlabs/skeleton';
 	import AddNewCharacter from '$lib/AddNewCharacter.svelte';
 	import { isCharacterNameExpiring, NameState } from '$lib/tibia_client';
-	import { deleteExpiringName, addExpiringName, getExpiringNames } from '$lib/firebase';
+	import { deleteExpiringName, addExpiringName, loadExpiringNames, unsubscribeAll, expiringNamesStore } from '$lib/firebase';
+
+	onMount(async () => {
+		loadExpiringNames()
+	});
+
+	onDestroy(() => {
+		unsubscribeAll()
+	});
 
 	let searchCharacterName = '';
-	let sourceData = [];
 
 	const modalComponent: ModalComponent = {
 		ref: AddNewCharacter,
@@ -20,13 +27,9 @@
 		component: modalComponent
 	};
 
-	async function loadOnlineCharacters() {
-		sourceData = await getExpiringNames();
-	}
 
 	async function addNewCharacter() {
 		//modalStore.trigger(modal);
-
 		const nameState = await isCharacterNameExpiring(searchCharacterName);
 		if (nameState !== NameState.expiring) {
 			alert(`${searchCharacterName} is ${NameState[nameState]}!`);
@@ -34,19 +37,15 @@
 		}
 
 		await addExpiringName(searchCharacterName);
-		loadOnlineCharacters();
 		searchCharacterName = '';
 	}
 
 	async function remove(idx: number) {
-		const name = sourceData[idx];
-		await deleteExpiringName(name.name);
-		loadOnlineCharacters();
+		const expiring_name = $expiringNamesStore[idx];
+		await deleteExpiringName(expiring_name.name);
 	}
 
-	onMount(async () => {
-		loadOnlineCharacters();
-	});
+	
 </script>
 
 <Modal />
@@ -65,11 +64,11 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each sourceData as row, i}
+					{#each $expiringNamesStore as row, i}
 						<tr>
 							<td>{row.name}</td>
 							<td>{row.status}</td>
-							<td>{row.nextCheck.toDate()}</td>
+							<td>{row.nextCheck.toDate().toLocaleString()}</td>
 							<td
 								><button type="button" class="btn variant-filled" on:click={() => remove(i)}
 									>Remove Track</button
@@ -81,7 +80,7 @@
 				<tfoot>
 					<tr>
 						<td colspan="3">
-							{#if sourceData.length < 30}
+							{#if $expiringNamesStore.length < 30}
 								<div class="md:flex md:items-center mb-6">
 									<div class="md:w-2/3">
 										<label class="block md:text-right mb-1 md:mb-0 pr-4" for="inline-full-name">
