@@ -10,7 +10,13 @@ const db = getFirestore(app)
 type ExpiringName = {
 	name: string,
 	nextCheck: Date,
-	status: string
+	status: string,
+	userUid: string,
+}
+
+type TibiaPalUser = {
+	notificationEmails: string,
+	userUid: string,
 }
 
 async function getExpiringNames(): Promise<ExpiringName[]> {
@@ -25,14 +31,16 @@ async function getExpiringNames(): Promise<ExpiringName[]> {
 	return names
 }
 
-async function sendEmail(email: string, characterName: string): Promise<void> {
-	logger.info("sending email")
+async function sendEmail(expiringName: ExpiringName): Promise<void> {
+	let userDoc = await db.collection("users").doc(expiringName.userUid).get()
+	let user  = userDoc.data() as TibiaPalUser
+
 	await db.collection("mail").add({
-		to: email,
+		to: user.notificationEmails,
 		template: {
 			name: "character-available",
 			data: {
-				characterName: characterName,
+				characterName: expiringName.name,
 			}
 		}
 	});
@@ -54,7 +62,7 @@ export const checkExpiringNames = onSchedule("* * * * *", async (_) => {
 		} else {
 			logger.info(name, "expired")
 			expiringName.status = "available"
-			await sendEmail("ivantakashi@gmail.com", expiringName.name)
+			await sendEmail(expiringName)
 		}
 
 		await db.collection("expiring_names").doc(expiringName.name).set(expiringName)
