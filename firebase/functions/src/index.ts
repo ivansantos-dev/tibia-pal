@@ -18,13 +18,26 @@ async function getExpiringNames(): Promise<ExpiringName[]> {
 
 	const snapshot = await db.collection("expiring_names")
 		.where('status', '==', 'expiring')
-		.where('nextCheck', '<', new Date())
+		// .where('nextCheck', '<', new Date())
 		.get()
 	snapshot.forEach((doc: DocumentSnapshot)=> names.push(doc.data() as ExpiringName));
 
 	return names
 }
 
+async function sendEmail(email: string, characterName: string): Promise<void> {
+	logger.info("sending email")
+	await db.collection("mail").add({
+		to: email,
+		template: {
+			name: "character-available",
+			data: {
+				characterName: characterName,
+			}
+		}
+	});
+
+}
 export const checkExpiringNames = onSchedule("* * * * *", async (_) => {
 	const expiringNames: ExpiringName[] = await getExpiringNames();
 	for (const expiringName of expiringNames) {
@@ -41,10 +54,10 @@ export const checkExpiringNames = onSchedule("* * * * *", async (_) => {
 		} else {
 			logger.info(name, "expired")
 			expiringName.status = "available"
+			await sendEmail("ivantakashi@gmail.com", expiringName.name)
 		}
 
-		db.collection("expiring_names").doc(expiringName.name).set(expiringName)
-
+		await db.collection("expiring_names").doc(expiringName.name).set(expiringName)
 	}
 })
 

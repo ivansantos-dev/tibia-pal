@@ -5,12 +5,15 @@
 
 	async function save() {
 		saveNotificationEmails(emails)
+		load()
+	}
+	async function load() {
+		let profile = await loadProfile()
+		emails = profile.notificationEmails
 	}
 
 	onMount(async () => {
-		let profile = await loadProfile()
-		emails = profile.notificationEmails
-		
+		load()
 	})
 
 </script>

@@ -1,10 +1,9 @@
 <script lang="ts">
 	import '../theme.postcss';
-	// If you have source.organizeImports set to true in VSCode, then it will auto change this ordering
 	import '@skeletonlabs/skeleton/styles/skeleton.css';
-	// Most of your app wide CSS should be put in this file
 	import '../app.postcss';
-	import { AppShell, AppBar, Avatar } from '@skeletonlabs/skeleton';
+
+	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
 	import Login from '$lib/Login.svelte';
 	import Logout from '$lib/Logout.svelte';
 	import { userStore } from '$lib/firebase';
@@ -29,10 +28,10 @@
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
-	{#if $userStore}
-		<slot />
-	{:else}
+	{#if !$userStore}
 		<Login />
+	{:else}
+		<slot />
 	{/if}
 
 	<svelte:fragment slot="footer">
