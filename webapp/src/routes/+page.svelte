@@ -1,56 +1,121 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { Modal, modalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings, ModalComponent } from '@skeletonlabs/skeleton';
-	import AddNewCharacter from '$lib/AddNewCharacter.svelte';
-	import { isCharacterNameExpiring, NameState } from '$lib/tibia_client';
-	import { deleteExpiringName, addExpiringName, loadExpiringNames, unsubscribeAll, expiringNamesStore } from '$lib/firebase';
+	import { getCharacterFromTibia, NameState } from '$lib/tibia_client';
+	import {friendListStore, expiringNamesStore } from '$lib/firebase';
 
 	onMount(async () => {
-		loadExpiringNames()
+		friendListStore.load()
+		expiringNamesStore.load()
 	});
 
 	onDestroy(() => {
-		unsubscribeAll()
+		expiringNamesStore.destroy()
+		friendListStore.destroy()
 	});
 
 	let searchCharacterName = '';
+	let searchFriendName = '';
 
-	const modalComponent: ModalComponent = {
-		ref: AddNewCharacter,
-		slot: '<p>Skeleton</p>'
-	};
 
-	const modal: ModalSettings = {
-		type: 'component',
-		// Pass the component directly:
-		component: modalComponent
-	};
+	async function addNewFriend() {
+		const name = await getCharacterFromTibia(searchFriendName);
+		const nameState = name.nameState
 
+		if (nameState !== NameState.not_found) {
+			alert(`${searchFriendName} is ${NameState[nameState]}!`);
+			return;
+		}
+		await friendListStore.add(searchFriendName, name.world)
+
+		searchFriendName = '';
+	}
+
+	async function removeFriend(idx: number) {
+		const friend = $friendListStore[idx];
+		await friendListStore.delete(friend.id);
+	}
 
 	async function addNewCharacter() {
-		//modalStore.trigger(modal);
-		const nameState = await isCharacterNameExpiring(searchCharacterName);
-		if (nameState !== NameState.expiring) {
+		const character = await getCharacterFromTibia(searchCharacterName);
+		const nameState = character.nameState
+		if (character.nameState !== NameState.expiring) {
 			alert(`${searchCharacterName} is ${NameState[nameState]}!`);
 			return;
 		}
 
-		await addExpiringName(searchCharacterName);
+		await expiringNamesStore.add(searchCharacterName);
 		searchCharacterName = '';
 	}
 
 	async function remove(idx: number) {
 		const expiring_name = $expiringNamesStore[idx];
-		await deleteExpiringName(expiring_name.name);
+		await expiringNamesStore.delete(expiring_name.name);
 	}
 
 	
 </script>
 
-<Modal />
-<div class="container h-full mx-auto flex justify-center items-center">
-	<div class="space-y-5">
+<div class="flex justify-center items-center flex-col p-4">
+	<div class="card p-8 m-4 w-full">
+		<h1 class="h1">Online Pals</h1>
+
+		<div class="table-container">
+			<table class="table hover">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>World</th>
+						<th>Status</th>
+						<th><span /></th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each $friendListStore as row, i}
+						<tr>
+							<td>{row.name}</td>
+							<td>{row.world}</td>
+							<td>{row.status}</td>
+							<td
+								><button type="button" class="btn variant-filled" on:click={() => removeFriend(i)}
+									>Remove Track</button
+								>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="3">
+							{#if $friendListStore.length < 30}
+								<div class="md:flex md:items-center mb-6">
+									<div class="md:w-2/3">
+										<label class="block md:text-right mb-1 md:mb-0 pr-4" for="inline-full-name">
+											<input
+												class="input"
+												id="inline-full-name"
+												type="text"
+												placeholder="Search for a friend"
+												bind:value={searchFriendName}
+											/>
+										</label>
+									</div>
+									<div class="md:w-1/3">
+										<button type="button" class="btn variant-filled" on:click={addNewFriend}
+											>Add</button
+										>
+									</div>
+								</div>
+							{:else}
+								<em>You can only track up to 3 player names</em>
+							{/if}
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+	</div>
+	</div>
+
+	<div class="card p-8 m-4 w-full">
 		<h1 class="h1">Former Names</h1>
 
 		<div class="table-container">

@@ -37,14 +37,23 @@ const firebaseConfig = {
 
 type ExpiringName = {
 	name: string,
-	status: "expiring" | "available"
+	status: string, 
 	nextCheck: Timestamp,
 	userUid: string,
 }
 
+type Friend = {
+	id: string,
+	name: string,
+	world: string,
+	status: "online" | "offline",
+	userUid: string,
+}
+
 export const userStore: Writable<User | null> = writable(null);
-export const expiringNamesStore: Writable<ExpiringName[]> = writable([]);
-let unsubscribeExpiringName: Unsubscribe = () => null 
+export const expiringNamesStore = createExpiringNameStore();
+export const friendListStore = createFriendListStore();
+
 
 export const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -54,46 +63,96 @@ onAuthStateChanged(auth, (user) => {
 	userStore.set(user);
 });
 
-export async function loadExpiringNames() {
-	const uid = auth.currentUser?.uid
-	const collections = collection(db, 'expiring_names');
-	const q = query(collections, where("userUid", "==", uid))
-	const docs = await getDocs(q);
-	const formerNames = docs.docs.map((doc) => doc.data() as ExpiringName);
-	expiringNamesStore.set(formerNames)
-	unsubscribeExpiringName = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
-		const names = []
-		querySnapshot.forEach((doc: DocumentSnapshot) => {
-			names.push(doc.data() as ExpiringName)
-			}
-		);
-	});
+
+function createFriendListStore() {
+	let unsubscribe: Unsubscribe = () => null
+	const {subscribe, set } = writable<Friend[]>([]);
+
+	return {
+		subscribe,
+		add: async (name: string, world: string) =>  {
+			const uid = get(userStore)?.uid 
+			await setDoc(doc(db, 'friends', name), {
+				name,
+				status: "offline",
+				world,
+				userUid: uid,
+			});
+				},
+		delete: async(id: string) => {
+			await deleteDoc(doc(db, 'friends', id));
+		
+		},
+		load: async () => {
+			const uid = auth.currentUser?.uid
+			const collections = collection(db, 'friends');
+
+			const q = query(collections, where("userUid", "==", uid))
+			const docs = await getDocs(q);
+			const names = docs.docs.map((doc) => { 
+				return 	{id: doc.id, ...doc.data()} as Friend
+			});
+			set(names)
+
+			unsubscribe = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
+				const names: Friend[] = []
+				querySnapshot.forEach((doc: DocumentSnapshot) => {
+					names.push({id: doc.id, ...doc.data()} as Friend)
+					}
+				);
+				set(names)
+			});
+		},
+		destroy: () => {
+			unsubscribe()
+		}
+	}
 }
 
-export async function addExpiringName(name: string) {
-	const uid = get(userStore)?.uid 
-	const now = new Date().getTime();
-	await setDoc(doc(db, 'expiring_names', name), {
-		name,
-		status: NameState[NameState.expiring],
-		nextCheck: new Date(now + 1 * 60 * 60 * 1000),
-		userUid: uid,
-	});
-}
+function createExpiringNameStore() {
+	let unsubscribe: Unsubscribe = () => null
 
-export async function deleteExpiringName(name: string) {
-	await deleteDoc(doc(db, 'expiring_names', name));
-}
+	const { subscribe, set } = writable<ExpiringName[]>([])
 
+	return {
+		subscribe,
+		add: async (name: string) => {
+			const uid = get(userStore)?.uid 
+		const now = new Date().getTime();
+		await setDoc(doc(db, 'expiring_names', name), {
+				name,
+				status: NameState[NameState.expiring],
+				nextCheck: new Date(now + 1 * 60 * 60 * 1000),
+				userUid: uid,
+			});
+		},
+		delete: async(id: string)  => {
+			await deleteDoc(doc(db, 'expiring_names', id));
+		},
+		load: async () => {
+			const uid = auth.currentUser?.uid
+			const collections = collection(db, 'expiring_names');
+			const q = query(collections, where("userUid", "==", uid))
+			const docs = await getDocs(q);
+			const formerNames = docs.docs.map((doc) => doc.data() as ExpiringName);
+			set(formerNames)
+			unsubscribe = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
+				const names: ExpiringName[] = []
+				querySnapshot.forEach((doc: DocumentSnapshot) => {
+					names.push(doc.data() as ExpiringName)
+					}
+				);
+				set(names)
+			});
+		},
+		destroy: () => unsubscribe()
+	}
+}
 
 export async function loadProfile() {
 	const uid = get(userStore)?.uid 
 	const docSnapshot = await getDoc(doc(db, 'users', uid))
 	return docSnapshot.data()
-}
-
-export async function unsubscribeAll() {
-	unsubscribeExpiringName()
 }
 
 export async function saveNotificationEmails(emails: string) {
@@ -104,7 +163,6 @@ export async function saveNotificationEmails(emails: string) {
 	});
 	
 }
-
 
 export async function login(email: string, password: string) {
 	await signInWithEmailAndPassword(auth, email, password);

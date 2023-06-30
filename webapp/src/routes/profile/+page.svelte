@@ -24,7 +24,7 @@
 	<form>
 		<label class="label">
 			<span>Notification Emails</span>
-			<input class="input" type="email" placeholder="notify-me@gmail.com,notify-me2@gmail.com" bind:value={emails}/>
+			<input class="input" type="text" placeholder="notify-me@gmail.com,notify-me2@gmail.com" bind:value={emails}/>
 		</label>
 
 			<button class="btn variant-filled mt-10" on:click={save}>Save</button>

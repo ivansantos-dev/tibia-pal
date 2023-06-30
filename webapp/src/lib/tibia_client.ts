@@ -1,39 +1,51 @@
 export enum NameState {
 	expiring,
 	available,
-	not_expiring,
+	not_found,
 	error
 }
 
-export async function isCharacterNameExpiring(name: string): Promise<NameState> {
+type TibiaApiCharacter =  {
+	name: string,
+	world: string,
+	expiring: boolean,
+	nameState: NameState
+}
+
+export async function getCharacterFromTibia(name: string): Promise<TibiaApiCharacter> {
 	const response = await fetch(`https://api.tibiadata.com/v3/character/${name}`);
 	const data = await response.json();
 
+	let nameState = NameState.not_found;
 	if (!response.ok) {
 		alert('failed to reach tibiadata');
 		console.error(response);
-		return NameState.error;
+		nameState = NameState.error;
 	}
 
-	const apiName: string = data.characters.character.name.toLowerCase();
+	const apiName: string = data.characters.character.name;
 	if (apiName === '') {
-		return NameState.available;
+		nameState =  NameState.available;
 	}
 
 	const lowerName = name.toLowerCase();
-	console.log(lowerName);
-
-	console.log('equality', lowerName === apiName);
-	if (lowerName === apiName) {
-		return NameState.not_expiring;
+	if (lowerName === apiName.toLowerCase()) {
+		nameState = NameState.not_found;
 	}
 
-	let formerNames: string[] = data.characters.character.former_names;
-	formerNames = formerNames.map((formerName) => formerName.toLowerCase());
-
-	if (formerNames.includes(name)) {
-		return NameState.expiring;
+	let formerNames: string[] = []
+	const apiFormerName: string = data.characters.character.former_names;
+	if (apiFormerName != undefined) {
+		formerNames = apiFormerName.map((name: string) => name.toLowerCase());
+		if (formerNames.includes(name)) {
+			nameState =  NameState.expiring;
+		}
 	}
 
-	return NameState.not_expiring;
+	return	{
+		name: apiName,
+		world: data.characters.character.world,
+		expiring: nameState === NameState.expiring,
+		nameState: nameState
+	}
 }
