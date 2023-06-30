@@ -1,11 +1,11 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
 import axios from "axios";
-import { initializeApp } from 'firebase-admin/app';
-import { DocumentSnapshot, getFirestore } from 'firebase-admin/firestore';
+import {initializeApp} from "firebase-admin/app";
+import {DocumentSnapshot, getFirestore} from "firebase-admin/firestore";
 
-const app = initializeApp()
-const db = getFirestore(app)
+const app = initializeApp();
+const db = getFirestore(app);
 
 type ExpiringName = {
 	name: string,
@@ -20,53 +20,57 @@ type TibiaPalUser = {
 }
 
 async function getExpiringNames(): Promise<ExpiringName[]> {
-	const names: ExpiringName[] = []
+  const names: ExpiringName[] = [];
 
-	const snapshot = await db.collection("expiring_names")
-		.where('status', '==', 'expiring')
-		// .where('nextCheck', '<', new Date())
-		.get()
-	snapshot.forEach((doc: DocumentSnapshot)=> names.push(doc.data() as ExpiringName));
+  const snapshot = await db.collection("expiring_names")
+    .where("status", "==", "expiring")
+    .where("nextCheck", "<", new Date())
+    .get();
+  snapshot.forEach((doc: DocumentSnapshot) =>
+    names.push(doc.data() as ExpiringName)
+  );
 
-	return names
+  return names;
 }
 
 async function sendEmail(expiringName: ExpiringName): Promise<void> {
-	let userDoc = await db.collection("users").doc(expiringName.userUid).get()
-	let user  = userDoc.data() as TibiaPalUser
+  const userDoc = await db.collection("users").doc(expiringName.userUid).get();
+  const user = userDoc.data() as TibiaPalUser;
 
-	await db.collection("mail").add({
-		to: user.notificationEmails,
-		template: {
-			name: "character-available",
-			data: {
-				characterName: expiringName.name,
-			}
-		}
-	});
-
+  await db.collection("mail").add({
+    to: user.notificationEmails,
+    template: {
+      name: "character-available",
+      data: {
+        characterName: expiringName.name,
+      },
+    },
+  });
 }
-export const checkExpiringNames = onSchedule("* * * * *", async (_) => {
-	const expiringNames: ExpiringName[] = await getExpiringNames();
-	for (const expiringName of expiringNames) {
-		logger.info(expiringName)
-		let name = expiringName.name
-		let response = await axios.get(`https://api.tibiadata.com/v3/character/${name}`);
-		const apiName = response.data.characters.character.name
 
-		const expired = !apiName || apiName === ''
-		if (!expired) {
-			let now = new Date();
-			now.setHours(now.getHours() + 1)
-			expiringName.nextCheck = now 
-		} else {
-			logger.info(name, "expired")
-			expiringName.status = "available"
-			await sendEmail(expiringName)
-		}
+export const checkExpiringNames = onSchedule("* * * * *", async () => {
+  const expiringNames: ExpiringName[] = await getExpiringNames();
+  logger.info(`checking ${expiringNames.length} names`);
+  for (const expiringName of expiringNames) {
+    const name = expiringName.name;
+    const response = await axios.get(`https://api.tibiadata.com/v3/character/${name}`);
+    const apiName = response.data.characters.character.name;
 
-		await db.collection("expiring_names").doc(expiringName.name).set(expiringName)
-	}
-})
+    const expired = !apiName || apiName === "";
+    if (!expired) {
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
+      expiringName.nextCheck = now;
+    } else {
+      logger.info(name, "expired");
+      expiringName.status = "available";
+      await sendEmail(expiringName);
+    }
+
+    await db.collection("expiring_names")
+      .doc(expiringName.name)
+      .set(expiringName);
+  }
+});
 
 
