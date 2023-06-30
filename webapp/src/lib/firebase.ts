@@ -7,7 +7,9 @@ import {
 	getDocs,
 	getDoc,
 	Timestamp,
-	deleteDoc
+	deleteDoc,
+    where,
+    query
 } from 'firebase/firestore/lite';
 import { NameState } from './tibia_client';
 import {
@@ -45,24 +47,28 @@ onAuthStateChanged(auth, (user) => {
 
 // Get a list of cities from your database
 export async function getExpiringNames(): Promise<{}> {
+	const uid = auth.currentUser!.uid
 	const collections = collection(db, 'expiring_names');
-	const docs = await getDocs(collections);
+	const q = query(collections, where("userUid", "==", uid))
+	const docs = await getDocs(q);
 	const formerNames = docs.docs.map((doc) => doc.data());
 
 	return formerNames;
 }
 
 export async function addExpiringName(name: string) {
+	const uid = auth.currentUser!.uid
 	const now = new Date().getTime();
 	await setDoc(doc(db, 'expiring_names', name), {
 		name,
 		status: NameState[NameState.expiring],
-		nextCheck: new Date(now + 1 * 60 * 60 * 1000)
+		nextCheck: new Date(now + 1 * 60 * 60 * 1000),
+		userUid: uid,
 	});
 }
 
 export async function deleteExpiringName(name: string) {
-	await deleteDoc(doc(db, 'expiring_name', name));
+	await deleteDoc(doc(db, 'expiring_names', name));
 }
 
 export async function login(email: string, password: string) {
