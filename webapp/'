@@ -55,7 +55,6 @@ type Friend = {
 export const userStore: Writable<User | null> = writable(null);
 export const expiringNamesStore = createExpiringNameStore();
 export const friendListStore = createFriendListStore();
-export const profileStore = createProfileStore();
 
 
 export const app = initializeApp(firebaseConfig);
@@ -153,36 +152,31 @@ function createExpiringNameStore() {
 }
 
 type PalUser = {
-	notificationEmails: string,
-	enableNotificationEmail: boolean,
+	notificationEmail: string[],
+	enableNotificationEmail: boolean = false,
 }
 
 function createProfileStore() {
 	let unsubscribe: Unsubscribe = () => null;
 
-	const { subscribe, set } = writable<PalUser | null>(null)
+	const { subscribe, set } = writable<PalUser?>(null)
 
 	return {
 		subscribe,
-		load: async () => {
-			const uid = get(userStore)!.uid 
+		load: () => {
+			const uid = get(userStore)?.uid 
 			const docRef = doc(db, 'users', uid)
 			const docSnapshot = await getDoc(docRef)
 			set(docSnapshot.data() as PalUser);
 
 			unsubscribe = onSnapshot(docRef, (doc) => {
-				set(doc.data() as PalUser);
-			});
+				set(doc.data() as PalUser)		
+			}
 		},
-		save: async (enableNotificationEmail: boolean, notificationEmails: string[]) => {
-			const uid = get(userStore)!.uid 
-			await setDoc(doc(db, 'users', uid), {
-				enableNotificationEmail,
-				notificationEmails,
-			});
-		},
-		destroy: () => unsubscribe()
-	}
+		save: (user: PalUser) => {
+			const uid = get(userStore)?.uid 
+			await setDoc(doc(db, 'users', uid), user);
+		}
 
 }
 

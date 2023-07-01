@@ -4,13 +4,13 @@
 	import {friendListStore, expiringNamesStore } from '$lib/firebase';
 
 	onMount(async () => {
-		friendListStore.load()
-		expiringNamesStore.load()
+		friendListStore.load();
+		expiringNamesStore.load();
 	});
 
 	onDestroy(() => {
-		expiringNamesStore.destroy()
-		friendListStore.destroy()
+		expiringNamesStore.destroy();
+		friendListStore.destroy();
 	});
 
 	let searchCharacterName = '';
@@ -56,8 +56,8 @@
 </script>
 
 <div class="flex justify-center items-center flex-col p-4">
-	<div class="card p-8 m-4 w-full">
-		<h1 class="h1">Online Pals</h1>
+	<div class="card p-4 m-4 w-full">
+		<h1 class="h1 pb-4">Online Pals</h1>
 
 		<div class="table-container">
 			<table class="table hover">
@@ -115,8 +115,8 @@
 	</div>
 	</div>
 
-	<div class="card p-8 m-4 w-full">
-		<h1 class="h1">Former Names</h1>
+	<div class="card p-4 m-4 w-full">
+		<h1 class="h1 pb-4">Former Names</h1>
 
 		<div class="table-container">
 			<table class="table hover">
