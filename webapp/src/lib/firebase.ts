@@ -26,9 +26,9 @@ import {
 } from 'firebase/auth';
 import { get, writable, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import {getMessaging, getToken} from 'firebase/messaging';
+import {onMessage,  getToken, getMessaging} from 'firebase/messaging';
 
-const firebaseConfig = {
+export const firebaseConfig = {
 	apiKey: 'AIzaSyA7Zj56RE-zq3NuVU1QeZuXP8_RPFxlNRY',
 	authDomain: 'tibia-1fcfa.firebaseapp.com',
 	projectId: 'tibia-1fcfa',
@@ -69,6 +69,7 @@ onAuthStateChanged(auth, (user) => {
 });
 
 if (browser) {
+	new Notification('test')
 	Notification.requestPermission();
 	const messaging = getMessaging();
 	getToken(messaging, { vapidKey: 'BLoJY3mZOwweR3KemCGlgFArwTfGh2PUzV2ssE_JSxUlQlUyeEZQN3PqoyjbQUvxz_pE1NwiBGm2bqBozld_5mo' })
@@ -80,6 +81,9 @@ if (browser) {
 	  }
 	}).catch((err) => {
 	  console.log('An error occurred while retrieving token. ', err);
+	});
+	onMessage(messaging, (payload) => {
+		console.log('Message received. ', payload);
 	});
 }
 
