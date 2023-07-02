@@ -69,8 +69,6 @@ onAuthStateChanged(auth, (user) => {
 });
 
 if (browser) {
-	new Notification('test')
-	Notification.requestPermission();
 	const messaging = getMessaging();
 	getToken(messaging, { vapidKey: 'BLoJY3mZOwweR3KemCGlgFArwTfGh2PUzV2ssE_JSxUlQlUyeEZQN3PqoyjbQUvxz_pE1NwiBGm2bqBozld_5mo' })
 		.then((currentToken) => {
