@@ -12,9 +12,9 @@
 
 
 	onMount(async () => {
-		profileStore.load()
-		notificationEmails = $profileStore!.notificationEmails
-		enableEmailNotification = $profileStore!.enableNotificationEmail
+		profileStore.load();
+		notificationEmails = $profileStore.notificationEmails
+		enableEmailNotification = $profileStore.enableNotificationEmail
 	});
 
 	onDestroy(async () => {

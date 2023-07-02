@@ -180,7 +180,7 @@ type PalUser = {
 function createProfileStore() {
 	let unsubscribe: Unsubscribe = () => null;
 
-	const { subscribe, set } = writable<PalUser | null>(null)
+	const { subscribe, set } = writable<PalUser>({notificationEmails:'', enableNotificationEmail:false})
 
 	return {
 		subscribe,
