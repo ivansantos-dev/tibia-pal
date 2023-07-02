@@ -2,12 +2,14 @@
 	import { profileStore } from '$lib/firebase'
 	import { onDestroy, onMount } from 'svelte';
 	import { SlideToggle } from '@skeletonlabs/skeleton';
+
 	let notificationEmails = ''
 	let enableEmailNotification = false;
 
 	async function save() {
 		profileStore.save(enableEmailNotification, notificationEmails)
 	}
+
 
 	onMount(async () => {
 		profileStore.load()
@@ -21,9 +23,10 @@
 </script>
 	
 
-	 
 <div class="card max-w-2xl mx-auto p-8 m-4">
 	<form>
+		<button class="btn variant-filled" on:click={() => Notification.requestPermission()}>Request Permission</button> 
+		<br/>
 		<SlideToggle name="slide" bind:checked={enableEmailNotification}>Enable Email Notification</SlideToggle>
 		<label class="label">
 			<span>Notification Emails</span>

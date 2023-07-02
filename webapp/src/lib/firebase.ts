@@ -25,6 +25,8 @@ import {
     type Unsubscribe
 } from 'firebase/auth';
 import { get, writable, type Writable } from 'svelte/store';
+import { browser } from '$app/environment';
+import {getMessaging, getToken} from 'firebase/messaging';
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyA7Zj56RE-zq3NuVU1QeZuXP8_RPFxlNRY',
@@ -65,6 +67,22 @@ const auth = getAuth(app);
 onAuthStateChanged(auth, (user) => {
 	userStore.set(user);
 });
+
+if (browser) {
+	Notification.requestPermission();
+	const messaging = getMessaging();
+	getToken(messaging, { vapidKey: 'BLoJY3mZOwweR3KemCGlgFArwTfGh2PUzV2ssE_JSxUlQlUyeEZQN3PqoyjbQUvxz_pE1NwiBGm2bqBozld_5mo' })
+		.then((currentToken) => {
+	  if (currentToken) {
+				console.log(currentToken)
+	  } else {
+	    console.log('No registration token available. Request permission to generate one.');
+	  }
+	}).catch((err) => {
+	  console.log('An error occurred while retrieving token. ', err);
+	});
+}
+
 
 
 function createFriendListStore() {
