@@ -9,16 +9,16 @@ const app = initializeApp();
 const db = getFirestore(app);
 
 type ExpiringName = {
-	name: string,
-	nextCheck: Date,
-	status: string,
-	userUid: string,
+  name: string,
+  status: string,
+  userUid: string,
+  lastCheck?: Date,
 }
 
 
 type TibiaPalUser = {
-	notificationEmails: string,
-	userUid: string,
+  notificationEmails: string,
+  userUid: string,
 }
 
 async function getExpiringNames(): Promise<ExpiringName[]> {
@@ -68,6 +68,7 @@ export const checkExpiringNames = onSchedule("*/10 * * * *", async () => {
       await sendEmail(expiringName);
     }
 
+    expiringName.lastCheck = new Date(); 
     await db.collection("expiring_names")
       .doc(expiringName.name)
       .set(expiringName);
