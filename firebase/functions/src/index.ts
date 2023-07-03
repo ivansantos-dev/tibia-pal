@@ -12,7 +12,8 @@ type ExpiringName = {
   name: string,
   status: string,
   userUid: string,
-  lastCheck?: Date,
+  nextCheck: Date,
+  lastChecked: Date,
 }
 
 
@@ -68,7 +69,7 @@ export const checkExpiringNames = onSchedule("*/10 * * * *", async () => {
       await sendEmail(expiringName);
     }
 
-    expiringName.lastCheck = new Date(); 
+    expiringName.lastChecked = new Date(); 
     await db.collection("expiring_names")
       .doc(expiringName.name)
       .set(expiringName);
@@ -87,7 +88,7 @@ const worldConverter = {
 const worldCollection = db.collection("worlds").withConverter(worldConverter); 
 
 
-function ArrayEqual(a: string[], b: string[]): boolean {
+function arrayEquals(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
 
   const sortA = [...a].sort();
@@ -112,7 +113,7 @@ export const updateWorldOnlinePlayers = onSchedule("*/3 * * * *", async () => {
     const onlinePlayers = players.map((player) => player.name);
 
     const oldOnlinePlayers = doc.data().onlinePlayers
-    if (!ArrayEqual(oldOnlinePlayers, onlinePlayers)) {
+    if (!arrayEquals(oldOnlinePlayers, onlinePlayers)) {
       logger.debug("arrays are different");
       await worldCollection.doc(doc.id).set({onlinePlayers})
     }

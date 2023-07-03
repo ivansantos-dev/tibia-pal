@@ -34,7 +34,7 @@ export async function getCharacterFromTibia(name: string): Promise<TibiaApiChara
 	}
 
 	let formerNames: string[] = []
-	const apiFormerName: string = data.characters.character.former_names;
+	const apiFormerName: string[] = data.characters.character.former_names;
 	if (apiFormerName != undefined) {
 		formerNames = apiFormerName.map((name: string) => name.toLowerCase());
 		if (formerNames.includes(lowerName)) {

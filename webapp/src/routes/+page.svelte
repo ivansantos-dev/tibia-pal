@@ -76,8 +76,8 @@
 							<td>{row.world}</td>
 							<td>{row.status}</td>
 							<td
-								><button type="button" class="btn variant-filled" on:click={() => removeFriend(i)}
-									>Remove Track</button
+								><button type="button" class="btn variant-filled-error" on:click={() => removeFriend(i)}
+									>Remove</button
 								>
 							</td>
 						</tr>
@@ -124,7 +124,7 @@
 					<tr>
 						<th>Name</th>
 						<th>Status</th>
-						<th>Next Check</th>
+						<th>Last Checked</th>
 						<th />
 					</tr>
 				</thead>
@@ -133,10 +133,10 @@
 						<tr>
 							<td>{row.name}</td>
 							<td>{row.status}</td>
-							<td>{row.nextCheck.toDate().toLocaleString()}</td>
+							<td>{row.lastChecked?.toDate().toLocaleString()}</td>
 							<td
-								><button type="button" class="btn variant-filled" on:click={() => remove(i)}
-									>Remove Track</button
+								><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}
+									>Remove</button
 								>
 							</td></tr
 						>

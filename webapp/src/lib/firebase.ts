@@ -43,6 +43,7 @@ type ExpiringName = {
 	name: string,
 	status: string, 
 	nextCheck: Timestamp,
+	lastChecked: Timestamp,
 	userUid: string,
 }
 
@@ -72,14 +73,15 @@ if (browser) {
 	const messaging = getMessaging();
 	getToken(messaging, { vapidKey: 'BLoJY3mZOwweR3KemCGlgFArwTfGh2PUzV2ssE_JSxUlQlUyeEZQN3PqoyjbQUvxz_pE1NwiBGm2bqBozld_5mo' })
 		.then((currentToken) => {
-	  if (currentToken) {
-				console.log(currentToken)
-	  } else {
-	    console.log('No registration token available. Request permission to generate one.');
-	  }
-	}).catch((err) => {
-	  console.log('An error occurred while retrieving token. ', err);
+			if (currentToken) {
+				console.log("same current token")
+			} else {
+				console.log('No registration token available. Request permission to generate one.');
+			}
+		}).catch((err) => {
+			console.log('An error occurred while retrieving token. ', err);
 	});
+
 	onMessage(messaging, (payload) => {
 		console.log('Message received. ', payload);
 	});
@@ -145,6 +147,7 @@ function createExpiringNameStore() {
 		await addDoc(collection(db, 'expiring_names'), {
 				name,
 				status: NameState[NameState.expiring],
+				lastChecked: now,
 				nextCheck: new Date(now + 1 * 60 * 60 * 1000),
 				userUid: uid,
 			});
