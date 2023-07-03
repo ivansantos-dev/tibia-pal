@@ -47,7 +47,7 @@ type TrackingPlayer = {
 type Player = {
 	name: string,
 	world: string,
-	status: "online" | "offline",
+	status: "online" | "offline" | "unknown",
 }
 
 type ExpiringName = {
@@ -100,20 +100,24 @@ if (browser) {
 
 function createFriendListStore() {
 	let unsubscribe: Unsubscribe = () => null
+	// let unsubscribeTracking: Unsubscribe = () => null TODO add listener on trackingcollection so that we online resubscribe when deleting instead of recreating the entire set
 	const {subscribe, set } = writable<Player[]>([]);
 
 	const playersCollection = collection(db, "players").withConverter(playerConverter);
+	const trackingCollection = collection(db, "tracking_players");
 
 	async function realtimeSubscription() {
 		unsubscribe()
 		const uid = auth.currentUser?.uid
-		const collections = collection(db, "tracking_players");
-		const q = query(collections, where("userUid", "==", uid))
+		const q = query(trackingCollection, where("userUid", "==", uid))
 		const docs = await getDocs(q);
 		const names = docs.docs.map((doc) => { 
 			return 	(doc.data() as TrackingPlayer).player
 		});
-
+		if (names.length == 0) {
+			set([])
+			return;
+		}
 		const playerQuery = query(playersCollection, where("name", 'in', names));
 		const playersDocs = await getDocs(playerQuery);
 		const players = playersDocs.docs.map((doc) => doc.data());
@@ -133,19 +137,29 @@ function createFriendListStore() {
 		subscribe,
 		add: async (name: string, world: string) =>  {
 		const userUid = auth.currentUser?.uid
-		await addDoc(collection(db, 'tracking_players'), {
+		await addDoc(trackingCollection, {
 				player: name,
 				userUid
 			});
 			await setDoc(doc(playersCollection, name), {
 				name,
 				world,
-				status: "offline"
+				status: "unknown" // TODO not set unknown to everybody
 				}, {merge: true});
+
 			realtimeSubscription();
 		},
 		delete: async(deletePlayer: string) => {
-			await deleteDoc(doc(db, 'tracking_players', deletePlayer));
+			// TODO not have to lookup data
+			const userUid = auth.currentUser?.uid
+			// TODO enforce auth for userUid for tracking_players
+			const trackingQuery = query(trackingCollection, where('player', '==', deletePlayer), where('userUid', '==', userUid))
+			const docs = await getDocs(trackingQuery)
+
+			docs.docs.forEach(async (docSnapshot) => {
+				await deleteDoc(doc(trackingCollection, docSnapshot.id))
+			});
+
 			realtimeSubscription()
 		},
 		load: async () => {

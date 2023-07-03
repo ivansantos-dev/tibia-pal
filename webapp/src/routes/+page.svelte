@@ -32,7 +32,8 @@
 
 	async function removeFriend(idx: number) {
 		const friend = $friendListStore[idx];
-		await friendListStore.delete(friend.id);
+		console.log(friend)
+		await friendListStore.delete(friend.name);
 	}
 
 	async function addNewCharacter() {
