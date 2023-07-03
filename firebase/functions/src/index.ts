@@ -1,4 +1,5 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import axios from "axios";
 import {initializeApp} from "firebase-admin/app";
@@ -13,6 +14,7 @@ type ExpiringName = {
 	status: string,
 	userUid: string,
 }
+
 
 type TibiaPalUser = {
 	notificationEmails: string,
@@ -44,11 +46,10 @@ async function sendEmail(expiringName: ExpiringName): Promise<void> {
       data: {
         characterName: expiringName.name,
       },
-    },
-  });
+    }, });
 }
 
-export const checkExpiringNames = onSchedule("* * * * *", async () => {
+export const checkExpiringNames = onSchedule("*/10 * * * *", async () => {
   const expiringNames: ExpiringName[] = await getExpiringNames();
   logger.info(`checking ${expiringNames.length} names`);
   for (const expiringName of expiringNames) {
@@ -73,4 +74,59 @@ export const checkExpiringNames = onSchedule("* * * * *", async () => {
   }
 });
 
+type World = {
+  onlinePlayers: string[]
+}
+  
+const worldConverter = {
+  toFirestore: (data: World) => data,
+  fromFirestore:( doc: FirebaseFirestore.QueryDocumentSnapshot) => doc.data() as World
+}
+
+const worldCollection = db.collection("worlds").withConverter(worldConverter); 
+
+
+function ArrayEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+
+  const sortA = [...a].sort();
+  const sortB = [...b].sort();
+  for (let i = 0; i < sortA.length; i++) {
+    if (sortA[i] !== sortB[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export const updateWorldOnlinePlayers = onSchedule("*/3 * * * *", async () => {
+  const qSnapshot = await worldCollection.get()
+  qSnapshot.forEach(async (doc) => {
+    const worldName = doc.id
+    logger.info("Processing world:", worldName)
+ 
+    const response = await axios.get(`https://api.tibiadata.com/v3/world/${worldName}`);
+    const players: [{name: string}] = response.data.worlds.world.online_players
+    const onlinePlayers = players.map((player) => player.name);
+
+    const oldOnlinePlayers = doc.data().onlinePlayers
+    if (!ArrayEqual(oldOnlinePlayers, onlinePlayers)) {
+      logger.debug("arrays are different");
+      await worldCollection.doc(doc.id).set({onlinePlayers})
+    }
+  });
+});
+
+
+export const addWorldBasedOnFriendList = onDocumentCreated("users/{userId}/player_follow/{playerName}", async (event) => {
+  const friendDoc = event.data;
+  const worldName = friendDoc.data().world
+  const doc = await worldCollection.doc(worldName).get()
+  if (doc.exists) {
+    return;
+  }
+  logger.info("Adding new world:", worldName);
+  await worldCollection.doc(worldName).set({onlinePlayers: []})
+});
 
