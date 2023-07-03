@@ -8,12 +8,13 @@ import {
 	getDoc,
 	deleteDoc,
 	onSnapshot,
-    where,
-    query,
-    DocumentSnapshot,
-    QuerySnapshot,
-    Timestamp,
-    addDoc,
+	where,
+	query,
+	DocumentSnapshot,
+	QuerySnapshot,
+	Timestamp,
+	addDoc,
+	QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { NameState } from './tibia_client';
 import {
@@ -38,6 +39,17 @@ export const firebaseConfig = {
 };
 
 
+type TrackingPlayer = {
+	player: string,
+	userUid: string
+}
+
+type Player = {
+	name: string,
+	world: string,
+	status: "online" | "offline",
+}
+
 type ExpiringName = {
 	id: string,
 	name: string,
@@ -47,23 +59,20 @@ type ExpiringName = {
 	userUid: string,
 }
 
-type Friend = {
-	id: string,
-	name: string,
-	world: string,
-	status: "online" | "offline",
-	userUid: string,
+const playerConverter = {
+  toFirestore: (data: Player) => data,
+  fromFirestore:(doc: QueryDocumentSnapshot) => doc.data() as Player
 }
+
+export const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 export const userStore: Writable<User | null> = writable(null);
 export const expiringNamesStore = createExpiringNameStore();
 export const friendListStore = createFriendListStore();
 export const profileStore = createProfileStore();
 
-
-export const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
 onAuthStateChanged(auth, (user) => {
 	userStore.set(user);
@@ -91,42 +100,56 @@ if (browser) {
 
 function createFriendListStore() {
 	let unsubscribe: Unsubscribe = () => null
-	const {subscribe, set } = writable<Friend[]>([]);
+	const {subscribe, set } = writable<Player[]>([]);
+
+	const playersCollection = collection(db, "players").withConverter(playerConverter);
+
+	async function realtimeSubscription() {
+		unsubscribe()
+		const uid = auth.currentUser?.uid
+		const collections = collection(db, "tracking_players");
+		const q = query(collections, where("userUid", "==", uid))
+		const docs = await getDocs(q);
+		const names = docs.docs.map((doc) => { 
+			return 	(doc.data() as TrackingPlayer).player
+		});
+
+		const playerQuery = query(playersCollection, where("name", 'in', names));
+		const playersDocs = await getDocs(playerQuery);
+		const players = playersDocs.docs.map((doc) => doc.data());
+		set(players)
+		
+		unsubscribe = onSnapshot(playerQuery, (querySnapshot: QuerySnapshot) => {
+			const names: Player[] = []
+			querySnapshot.forEach((doc: DocumentSnapshot) => {
+				names.push(doc.data() as Player)
+				}
+			);
+			set(names)
+		});
+	}
 
 	return {
 		subscribe,
 		add: async (name: string, world: string) =>  {
-			const uid = get(userStore)?.uid 
-			await addDoc(collection(db, 'friends'), {
-				name,
-				status: "offline",
-				world,
-				userUid: uid,
+		const userUid = auth.currentUser?.uid
+		await addDoc(collection(db, 'tracking_players'), {
+				player: name,
+				userUid
 			});
-				},
-		delete: async(id: string) => {
-			await deleteDoc(doc(db, 'friends', id));
-		
+			await setDoc(doc(playersCollection, name), {
+				name,
+				world,
+				status: "offline"
+				}, {merge: true});
+			realtimeSubscription();
+		},
+		delete: async(deletePlayer: string) => {
+			await deleteDoc(doc(db, 'tracking_players', deletePlayer));
+			realtimeSubscription()
 		},
 		load: async () => {
-			const uid = auth.currentUser?.uid
-			const collections = collection(db, 'friends');
-
-			const q = query(collections, where("userUid", "==", uid))
-			const docs = await getDocs(q);
-			const names = docs.docs.map((doc) => { 
-				return 	{id: doc.id, ...doc.data()} as Friend
-			});
-			set(names)
-
-			unsubscribe = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
-				const names: Friend[] = []
-				querySnapshot.forEach((doc: DocumentSnapshot) => {
-					names.push({id: doc.id, ...doc.data()} as Friend)
-					}
-				);
-				set(names)
-			});
+			realtimeSubscription()
 		},
 		destroy: () => {
 			unsubscribe()
