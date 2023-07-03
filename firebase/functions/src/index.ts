@@ -121,7 +121,7 @@ export const updateWorldOnlinePlayers = onSchedule("*/3 * * * *", async () => {
 });
 
 
-export const addWorldBasedOnFriendList = onDocumentCreated("users/{userId}/player_follow/{playerName}", async (event) => {
+export const addWorldBasedOnFriendList = onDocumentCreated("friends/{docId}", async (event) => {
   const friendDoc = event.data;
   const worldName = friendDoc.data().world
   const doc = await worldCollection.doc(worldName).get()
