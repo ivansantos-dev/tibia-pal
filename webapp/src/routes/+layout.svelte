@@ -7,6 +7,11 @@
 	import Login from '$lib/Login.svelte';
 	import Logout from '$lib/Logout.svelte';
 	import { userStore } from '$lib/firebase';
+	import { browser } from '$app/environment';
+
+	if (browser) {
+		Notification.requestPermission()
+	}
 </script>
 
 <svelte:head>

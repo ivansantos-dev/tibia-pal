@@ -33,8 +33,8 @@
 	
 
 <div class="card max-w-2xl mx-auto p-8 m-4">
-		<button class="btn variant-filled mb-4" on:click={requestPermission}>Request Permission</button> 
-		<button class="btn variant-filled-surface mb-4" on:click={testNotification}>Test Notification</button> 
+	<button class="btn variant-filled mb-4" on:click={requestPermission}>Request Permission</button> 
+	<button class="btn variant-filled-surface mb-4" on:click={testNotification}>Test Notification</button> 
 	<form>
 		<SlideToggle name="slide" bind:checked={enableEmailNotification}>Enable Email Notification</SlideToggle>
 		<label class="label">
