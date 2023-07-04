@@ -2,12 +2,21 @@
 	import { profileStore } from '$lib/firebase'
 	import { onDestroy, onMount } from 'svelte';
 	import { SlideToggle } from '@skeletonlabs/skeleton';
+	import { where } from 'firebase/firestore';
 
 	let notificationEmails = ''
 	let enableEmailNotification = false;
 
 	async function save() {
 		profileStore.save(enableEmailNotification, notificationEmails)
+	}
+
+	async function requestPermission() {
+		profileStore.notificationRequestPermission()
+	}
+
+	function testNotification() {
+		new Notification('Tibia Pal', { body: 'This is a test notification', icon: '/favicon.ico' })
 	}
 
 
@@ -24,9 +33,9 @@
 	
 
 <div class="card max-w-2xl mx-auto p-8 m-4">
+		<button class="btn variant-filled mb-4" on:click={requestPermission}>Request Permission</button> 
+		<button class="btn variant-filled-surface mb-4" on:click={testNotification}>Test Notification</button> 
 	<form>
-		<button class="btn variant-filled" on:click={() => Notification.requestPermission()}>Request Permission</button> 
-		<br/>
 		<SlideToggle name="slide" bind:checked={enableEmailNotification}>Enable Email Notification</SlideToggle>
 		<label class="label">
 			<span>Notification Emails</span>

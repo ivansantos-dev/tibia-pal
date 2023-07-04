@@ -7,7 +7,7 @@
 		friendListStore.load();
 		expiringNamesStore.load();
 	});
-
+	
 	onDestroy(() => {
 		expiringNamesStore.destroy();
 		friendListStore.destroy();

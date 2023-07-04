@@ -38,6 +38,10 @@ export const firebaseConfig = {
 	appId: '1:244551684591:web:ec0b7e554422245ff7a61a'
 };
 
+const firebaseMessagingConfig ={ 
+	vapidKey: 'BLoJY3mZOwweR3KemCGlgFArwTfGh2PUzV2ssE_JSxUlQlUyeEZQN3PqoyjbQUvxz_pE1NwiBGm2bqBozld_5mo'
+}
+
 
 type TrackingPlayer = {
 	player: string,
@@ -73,30 +77,16 @@ export const expiringNamesStore = createExpiringNameStore();
 export const friendListStore = createFriendListStore();
 export const profileStore = createProfileStore();
 
-
-onAuthStateChanged(auth, (user) => {
-	userStore.set(user);
-});
-
 if (browser) {
-	const messaging = getMessaging();
-	getToken(messaging, { vapidKey: 'BLoJY3mZOwweR3KemCGlgFArwTfGh2PUzV2ssE_JSxUlQlUyeEZQN3PqoyjbQUvxz_pE1NwiBGm2bqBozld_5mo' })
-		.then((currentToken) => {
-			if (currentToken) {
-				console.log("same current token")
-			} else {
-				console.log('No registration token available. Request permission to generate one.');
-			}
-		}).catch((err) => {
-			console.log('An error occurred while retrieving token. ', err);
+	onAuthStateChanged(auth, (user) => {
+		userStore.set(user);
 	});
 
+	const messaging = getMessaging(app);
 	onMessage(messaging, (payload) => {
-		console.log('Message received. ', payload);
+		new Notification('Tibia Pal Internal', payload.notification)
 	});
 }
-
-
 
 function createFriendListStore() {
 	let unsubscribe: Unsubscribe = () => null
@@ -234,14 +224,37 @@ function createProfileStore() {
 				set(doc.data() as PalUser);
 			});
 		},
-		save: async (enableNotificationEmail: boolean, notificationEmails: string[]) => {
+		save: async (enableNotificationEmail: boolean, notificationEmails: string) => {
 			const uid = get(userStore)!.uid 
 			await setDoc(doc(db, 'users', uid), {
 				enableNotificationEmail,
 				notificationEmails,
 			});
 		},
-		destroy: () => unsubscribe()
+		notificationRequestPermission: () => {
+			Notification.requestPermission().then((permission) => {
+				if (permission !== "granted") {
+					console.debug("permission not granted")
+					return;
+				}
+				const messaging = getMessaging();
+				getToken(messaging, firebaseMessagingConfig)
+					.then(async (currentToken) => {
+						if (currentToken) {
+							const uid = get(userStore)!.uid;
+							await setDoc(doc(db, 'users', uid), { token: currentToken }, {merge: true});
+						} else {
+							alert('No registration token available. Request permission to generate one.');
+						}
+					}).catch((err) => {
+						console.log(err)
+						alert('An error occurred while retrieving token');
+				});
+			});
+		},
+		destroy: () => {
+			unsubscribe()
+		}
 	}
 
 }
