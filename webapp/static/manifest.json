@@ -1,0 +1,8 @@
+{
+  "name": "Tibia Buddy List",
+  "short_name": "TibiaBuddyList",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff",
+  "description": "Tibia Buddy List WebApp"
+}

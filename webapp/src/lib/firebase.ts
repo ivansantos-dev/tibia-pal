@@ -82,6 +82,7 @@ if (browser) {
 		userStore.set(user);
 	});
 
+	profileStore.notificationRequestPermission()	
 	const messaging = getMessaging(app);
 	onMessage(messaging, (payload) => {
 		new Notification('Tibia Pal Internal', payload.notification)
