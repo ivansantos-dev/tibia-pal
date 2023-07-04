@@ -27,7 +27,7 @@ async function getExpiringNames(): Promise<ExpiringName[]> {
 
   const snapshot = await db.collection("expiring_names")
     .where("status", "==", "expiring")
-    .where("nextCheck", "<", new Date())
+    // .where("nextCheck", "<", new Date())
     .get();
   snapshot.forEach((doc: DocumentSnapshot) =>
     names.push(doc.data() as ExpiringName)
@@ -102,26 +102,56 @@ function arrayEquals(a: string[], b: string[]): boolean {
   return true;
 }
 
-export const updateWorldOnlinePlayers = onSchedule("*/3 * * * *", async () => {
+export const updateWorldOnlinePlayers = onSchedule("* * * * *", async () => {
   const qSnapshot = await worldCollection.get()
   qSnapshot.forEach(async (doc) => {
     const worldName = doc.id
     logger.info("Processing world:", worldName)
  
     const response = await axios.get(`https://api.tibiadata.com/v3/world/${worldName}`);
+    if (response.status != 200) {
+      logger.error("unable to retrieve world info", response.status, response.data)
+      return;
+    }
+
     const players: [{name: string}] = response.data.worlds.world.online_players
     const onlinePlayers = players.map((player) => player.name);
 
     const oldOnlinePlayers = doc.data().onlinePlayers
-    if (!arrayEquals(oldOnlinePlayers, onlinePlayers)) {
-      logger.debug("arrays are different");
-      await worldCollection.doc(doc.id).set({onlinePlayers})
+    if (arrayEquals(oldOnlinePlayers, onlinePlayers)) {
+      return;
     }
+
+    const trackingPlayers  = new Set<string>()
+    const trackerPlayersDocs = await db.collection("tracking_players").get()
+    trackerPlayersDocs.docs.forEach((doc) => trackingPlayers.add(doc.data().player))
+
+    const loggedInPlayers = onlinePlayers.filter((onlinePlayer) => !oldOnlinePlayers.includes(onlinePlayer) && trackingPlayers.has(onlinePlayer))
+    const loggedOutPlayers = oldOnlinePlayers.filter((oldOnlinePlayer) => !onlinePlayers.includes(oldOnlinePlayer) && trackingPlayers.has(oldOnlinePlayer))
+
+    const writes = loggedInPlayers.map((player) => {
+      return {name: player, status: "online", world: worldName}
+    })
+    const writes2 = loggedOutPlayers.map((player) => {
+      return {name: player, status: "offline", world: worldName}
+    })
+
+    const final = writes.concat(writes2)
+
+    logger.debug("loaded tracking players", trackingPlayers)
+    logger.debug("writing to database", final)
+
+    const batch = db.batch()
+    for (const write of final) {
+      batch.set(db.collection("players").doc(write.name), write)
+    }
+    batch.set(worldCollection.doc(doc.id), {onlinePlayers})
+    await batch.commit()
   });
 });
 
 
-export const addWorldBasedOnFriendList = onDocumentCreated("friends/{docId}", async (event) => {
+export const addWorldBasedOnPlayers = onDocumentCreated("players/{docId}", async (event) => {
   const friendDoc = event.data;
   const worldName = friendDoc.data().world
   const doc = await worldCollection.doc(worldName).get()

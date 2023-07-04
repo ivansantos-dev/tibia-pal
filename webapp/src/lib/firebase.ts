@@ -47,7 +47,7 @@ type TrackingPlayer = {
 type Player = {
 	name: string,
 	world: string,
-	status: "online" | "offline" | "unknown",
+	status: "online" | "offline",
 }
 
 type ExpiringName = {
@@ -144,7 +144,7 @@ function createFriendListStore() {
 			await setDoc(doc(playersCollection, name), {
 				name,
 				world,
-				status: "unknown" // TODO not set unknown to everybody
+				status: "offline" // TODO not set unknown to everybody
 				}, {merge: true});
 
 			realtimeSubscription();
