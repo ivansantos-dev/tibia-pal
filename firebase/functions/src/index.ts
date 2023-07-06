@@ -1,8 +1,9 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
-import {onDocumentCreated} from "firebase-functions/v2/firestore";
+import {onDocumentCreated, onDocumentUpdated} from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import axios from "axios";
 import {initializeApp} from "firebase-admin/app";
+import {getMessaging} from "firebase-admin/messaging";
 import {DocumentSnapshot, getFirestore} from "firebase-admin/firestore";
 
 const app = initializeApp();
@@ -151,7 +152,7 @@ export const updateWorldOnlinePlayers = onSchedule("* * * * *", async () => {
 });
 
 
-export const addWorldBasedOnPlayers = onDocumentCreated("players/{docId}", async (event) => {
+export const addWorldBasedOnPlayers = onDocumentCreated("players/{playerName}", async (event) => {
   const friendDoc = event.data;
   const worldName = friendDoc.data().world
   const doc = await worldCollection.doc(worldName).get()
@@ -160,5 +161,56 @@ export const addWorldBasedOnPlayers = onDocumentCreated("players/{docId}", async
   }
   logger.info("Adding new world:", worldName);
   await worldCollection.doc(worldName).set({onlinePlayers: []})
+});
+
+export const notifyOnPlayerChanges = onDocumentUpdated("players/{playerName}", async (event) => {
+  const playerName = event.params.playerName;
+
+  logger.info(`Processing ${event.params.playerName}`)
+  const beforePlayer = event.data.before.data();
+  const newPlayerDoc = event.data.after.data();
+  logger.info(beforePlayer, newPlayerDoc);
+
+
+  if (beforePlayer.status === newPlayerDoc.status) {
+    return;
+  }
+
+  const trackingUserId = new Set<string>();
+  const trackingDocs = await db.collection("tracking_players").where("player", "==", playerName).get();
+  trackingDocs.docs.forEach((doc) => trackingUserId.add(doc.data().userUid));
+
+  logger.debug(trackingDocs.docs)
+  logger.debug(trackingUserId)
+
+  for (const userUid of trackingUserId) {
+    const userDocs = await db.collection("notification_tokens").where("userUid", "==", userUid).get();
+    const tokens: string[] = []
+    userDocs.docs.forEach((doc) => tokens.push(doc.id));
+
+    const message = {
+      notification: {
+        title: "Tibia Friend Tracker",
+        body: `${playerName} is ${newPlayerDoc.status}` 
+      },
+      tokens,
+    };
+    getMessaging().sendEachForMulticast(message)
+      .then((response) => {
+        if (response.failureCount > 0) {
+          const failedTokens = [];
+          response.responses.forEach((resp, idx) => {
+            if (!resp.success) {
+              failedTokens.push(tokens[idx]);
+            }
+          });
+          logger.error("List of tokens that caused failures: " + failedTokens);
+        }
+      })
+      .catch((error) => {
+        logger.error("Error sending message:", error);
+      });
+  }
+
 });
 

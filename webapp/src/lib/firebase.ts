@@ -68,7 +68,7 @@ const playerConverter = {
   fromFirestore:(doc: QueryDocumentSnapshot) => doc.data() as Player
 }
 
-export const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
@@ -82,7 +82,6 @@ if (browser) {
 		userStore.set(user);
 	});
 
-	profileStore.notificationRequestPermission()	
 	const messaging = getMessaging(app);
 	onMessage(messaging, (payload) => {
 		new Notification('Tibia Pal Internal', payload.notification)
@@ -242,8 +241,8 @@ function createProfileStore() {
 				getToken(messaging, firebaseMessagingConfig)
 					.then(async (currentToken) => {
 						if (currentToken) {
-							const uid = get(userStore)!.uid;
-							await setDoc(doc(db, 'users', uid), { token: currentToken }, {merge: true});
+							const userUid = get(userStore)!.uid;
+							await setDoc(doc(db, 'notification_tokens', currentToken), { userUid  }, {merge: true});
 						} else {
 							alert('No registration token available. Request permission to generate one.');
 						}
