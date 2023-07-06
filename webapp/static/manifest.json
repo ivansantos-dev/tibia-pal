@@ -5,8 +5,8 @@
   "display": "standalone",
   "background_color": "#fff",
   "description": "Tibia Buddy List WebApp",
-	"icons": [{
-		"src": "favicon.ico",
-		"sizes:":"128x128"
-	}]
+  "icons": [{
+    "src": "favicon.ico",
+    "sizes:":"128x128"
+  }]
 }
