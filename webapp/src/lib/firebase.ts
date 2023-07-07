@@ -15,26 +15,21 @@ import {
 	Timestamp,
 	addDoc,
 	QueryDocumentSnapshot,
-    DocumentReference,
-    Firestore,
-    Query,
 } from 'firebase/firestore';
 import { NameState } from './tibia_client';
 import {
 	type User,
 	onAuthStateChanged,
-	signInWithEmailAndPassword,
 	getAuth,
 	signOut,
     type Unsubscribe,
     GoogleAuthProvider,
-    signInWithRedirect,
-    type Auth
+    type Auth,
+    signInWithPopup
 } from 'firebase/auth';
-import { get, readable, writable, type Writable } from 'svelte/store';
+import { get, readable, writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import {onMessage,  getToken, getMessaging} from 'firebase/messaging';
-import { init } from 'svelte/internal';
 
 export const firebaseConfig = {
 	apiKey: 'AIzaSyA7Zj56RE-zq3NuVU1QeZuXP8_RPFxlNRY',
@@ -107,7 +102,7 @@ function createUserStore(auth: Auth) {
   });
 
   async function login() {
-    await signInWithRedirect(auth, new GoogleAuthProvider())
+    await signInWithPopup(auth, new GoogleAuthProvider())
   }
 
   async function logout() {
@@ -290,12 +285,4 @@ return { subscribe,
 		}
 	}
 
-}
-
-export async function login(email: string, password: string) {
-	await signInWithEmailAndPassword(auth, email, password);
-}
-
-export async function logout() {
-	await signOut(auth);
 }

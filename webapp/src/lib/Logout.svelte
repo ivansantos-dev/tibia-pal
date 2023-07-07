@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { logout } from '$lib/firebase';
+	import { userStore } from '$lib/firebase';
 </script>
 
-<button class="btn variant-filled" on:click={logout}>Logout</button>
+<button class="btn variant-filled" on:click={userStore.logout}>Logout</button>
