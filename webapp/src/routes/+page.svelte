@@ -54,7 +54,7 @@
 	}
 </script>
 
-<div class="md:container md:mx-auto">
+<div class="max-w-2xl mx-auto p-8 m-4">
 	<div class="flex justify-center items-center flex-col p-4">
 		<div class="card p-4 m-4">
 			<h2 class="h2 pb-4">Buddy List</h2>

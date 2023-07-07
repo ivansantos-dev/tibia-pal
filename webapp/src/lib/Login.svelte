@@ -4,8 +4,7 @@
 	let password = '';
 
 	function signin() {
-		console.log(email, password);
-		login(email, password);
+		login(email.trim(), password.trim());
 	}
 </script>
 
