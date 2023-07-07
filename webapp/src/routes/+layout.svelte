@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../theme.postcss';
+	import '@skeletonlabs/skeleton/themes/theme-gold-nouveau.css';
 	import '@skeletonlabs/skeleton/styles/skeleton.css';
 	import '../app.postcss';
 
@@ -10,14 +10,14 @@
 </script>
 
 <svelte:head>
-	<title>Tibia Pal</title>
+	<title>Tibia Buddy List</title>
 </svelte:head>
 
 <AppShell>
 	<svelte:fragment slot="header">
 		<AppBar>
 			<svelte:fragment slot="lead">
-				<strong class="text-xl uppercase">Tibia Pal</strong>
+				<strong class="text-xl uppercase">Tibia Buddy List</strong>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				{#if $userStore}
@@ -35,6 +35,8 @@
 	{/if}
 
 	<svelte:fragment slot="footer">
-		<p>Copyright &copy; 2023</p>
+		<AppBar>
+			<p>Copyright &copy; 2023</p>
+		</AppBar>
 	</svelte:fragment>
 </AppShell>
