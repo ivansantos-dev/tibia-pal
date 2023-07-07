@@ -28,15 +28,15 @@
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
-	<div class="flex justify-center items-center h-screen mx-4">
 		{#if $userStore === undefined}
-			<ProgressRadial />
+			<div class="flex justify-center items-center h-screen mx-4">
+				<ProgressRadial />
+			</div>
 		{:else if $userStore === null}
 			<Login />
 		{:else}
 			<slot />
 		{/if}
-	</div>
 
 	<svelte:fragment slot="pageFooter">
 		<AppBar>

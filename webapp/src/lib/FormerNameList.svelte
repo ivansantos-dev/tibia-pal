@@ -32,62 +32,52 @@
 	}
 </script>
 
-<div class="card p-4 m-4">
-	<h2 class="h2 pb-4">Former Names</h2>
-	<div class="table-container">
-		<table class="table hover">
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Status</th>
-					<th>Last Checked</th>
-					<th><span /></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each $expiringNamesStore as row, i}
+<div class="card">
+	<header class="card-header">
+		<h2 class="h2 pb-4">Former Names</h2>
+	</header>
+	<section class="p-4">
+		<div class="table-container">
+			<table class="table hover">
+				<thead>
 					<tr>
-						<td>{row.name}</td>
-						<td>{row.status}</td>
-						<td>{row.lastChecked?.toDate().toLocaleString()}</td>
-						<td
-							><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}
-								>
-								<Icon icon="mdi:trash" />
-							</button
-							>
-						</td>
+						<th>Name</th>
+						<th>Status</th>
+						<th>Last Checked</th>
+						<th><span /></th>
 					</tr>
-				{/each}
-			</tbody>
-			<tfoot>
-				<tr>
-					<td colspan="3">
-						{#if $expiringNamesStore.length < 30}
-							<div class="md:flex md:items-center mb-6">
-								<div class="md:w-2/3">
-									<label class="block md:text-right mb-1 md:mb-0 pr-4" for="inline-full-name">
-										<input
-											class="input"
-											id="inline-full-name"
-											type="text"
-											placeholder="Search for an expiring name"
-											bind:value={searchCharacterName}
-										/>
-									</label>
-								</div>
-								<div class="md:w-1/3">
-									<button type="button" class="btn variant-filled" on:click={add}
-									>Add</button
+				</thead>
+				<tbody>
+					{#each $expiringNamesStore as row, i}
+						<tr>
+							<td>{row.name}</td>
+							<td>{row.status}</td>
+							<td>{row.lastChecked?.toDate().toLocaleString()}</td>
+							<td
+								><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}
 									>
-								</div>
-							</div>
-						{:else}
-							<em>You can only track up to 3 player names</em>
-						{/if}
-					</td>
-				</tr>
-			</tfoot>
-		</table>
-	</div>
+									<Icon icon="mdi:trash" />
+								</button
+								>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	</section>
+	
+	<footer class="card-footer">
+
+		{#if $expiringNamesStore.length < 3}
+			<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
+				<div class="input-group-shim"><Icon icon="mdi:search" /></div>
+				<input type="search" placeholder="Search..." 
+					bind:value={searchCharacterName} />
+				<button class="variant-filled" on:click={add}>Add</button>
+			</div>
+		{:else}
+		<em>You can only track up to 3 player names</em>
+		{/if}
+	</footer>
 </div>

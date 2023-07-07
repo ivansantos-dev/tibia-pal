@@ -1,0 +1,87 @@
+<script lang="ts">
+	import { onDestroy, onMount } from 'svelte';
+	import { getCharacterFromTibia, NameState } from '$lib/tibia_client';
+	import {expiringNamesStore } from '$lib/firebase';
+	import Icon from '@iconify/svelte';
+
+
+	onMount(async () => {
+		expiringNamesStore.load();
+	});
+	
+	onDestroy(() => {
+		expiringNamesStore.destroy(); });
+
+	let searchCharacterName = '';
+
+	async function add() {
+		const character = await getCharacterFromTibia(searchCharacterName);
+		const nameState = character.nameState
+		if (character.nameState !== NameState.expiring) {
+			alert(`${searchCharacterName} is ${NameState[nameState]}!`);
+			return;
+		}
+
+		await expiringNamesStore.add(searchCharacterName);
+		searchCharacterName = '';
+	}
+
+	async function remove(idx: number) {
+		const expiring_name = $expiringNamesStore[idx];
+		await expiringNamesStore.delete(expiring_name.id);
+	}
+</script>
+
+<div class="card p-4 m-4">
+	<h2 class="h2 pb-4">Former Names</h2>
+	<div class="table-container">
+		<table class="table hover">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Status</th>
+					<th>Last Checked</th>
+					<th><span /></th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each $expiringNamesStore as row, i}
+					<tr>
+						<td>{row.name}</td>
+						<td>{row.status}</td>
+						<td>{row.lastChecked?.toDate().toLocaleString()}</td>
+						<td
+							><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}
+								>
+								<Icon icon="mdi:trash" />
+							</button
+							>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+			<tfoot>
+				<tr>
+					<td colspan="3">
+						{#if $expiringNamesStore.length < 3}
+							<div class="flex">
+									<label class="block md:text-right mb-1 md:mb-0 pr-4" for="inline-full-name">
+										<input
+											class="input"
+											id="inline-full-name"
+											type="text"
+											placeholder="Search for an expiring name"
+											bind:value={searchCharacterName}
+										/>
+									</label>
+									<button type="button" class="btn variant-filled" on:click={add}>Add</button>
+								</div>
+						{:else}
+							<em>You can only track up to 3 player names</em>
+						{/if}
+					</td>
+				</tr>
+			</tfoot>
+		</table>
+	</div>
+</div>
