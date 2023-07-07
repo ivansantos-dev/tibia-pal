@@ -13,15 +13,3 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-messaging.onBackgroundMessage((payload) => {
-  console.log(
-    '[firebase-messaging-sw.js] Received background message ',
-    payload
-  );
-  var data = payload.notification;
-  const notificationTitle = data.title;
-  const notificationOptions = {
-    body: data.body,
-    icon: '/favicon.ico'
-  };
-});
