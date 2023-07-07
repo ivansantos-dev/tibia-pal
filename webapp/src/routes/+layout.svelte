@@ -34,7 +34,7 @@
 		<slot />
 	{/if}
 
-	<svelte:fragment slot="footer">
+	<svelte:fragment slot="pageFooter">
 		<AppBar>
 			<p>Copyright &copy; 2023</p>
 		</AppBar>

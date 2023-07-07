@@ -74,7 +74,13 @@
 							<tr>
 								<td>{row.name}</td>
 								<td>{row.world}</td>
-								<td>{row.status}</td>
+								<td>
+									{#if row.status == "offline"}
+										<strong class="text-red-500">{row.status}</strong>
+									{:else}
+										<strong class="text-green-500">{row.status}</strong>
+									{/if}
+								</td>
 								<td
 									><button type="button" class="btn variant-filled-error" on:click={() => removeFriend(i)}
 										>
