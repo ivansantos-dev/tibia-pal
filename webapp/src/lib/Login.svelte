@@ -1,32 +1,18 @@
 <script lang="ts">
-	import { login } from '$lib/firebase';
-	let email = '';
-	let password = '';
-
-	function signin() {
-		login(email.trim(), password.trim());
-	}
+	import { userStore } from '$lib/firebase';
+	import Icon from '@iconify/svelte';
 </script>
 
-<div class="card max-w-2xl mx-auto p-8 m-4">
-	<header class="card-jeader">
+<div class="card p-4">
+	<header class="card-header">
 		<h1 class="h1">Sign In</h1> 
 	</header>
 	<section class="p-4">
-		<form>
-			<label class="label">
-				<span>Email</span>
-				<input class="input" type="text" id="email" bind:value={email} />
-			</label>
-
-			<label class="label">
-				<span>Password</span>
-				<input class="input" type="password" id="password" bind:value={password} />
-			</label>
-		</form>
+		<button type="button" class="btn variant-filled" on:click={userStore.login}>
+			<span>
+				<Icon icon="devicon:google" />
+			</span>
+			<span>Continue with Google</span>
+		</button>
 	</section>
-	<footer class="card-footer">
-		<button type="button" class="btn variant-filled" on:click={signin}>Login</button>
-	</footer>
-
 </div>
