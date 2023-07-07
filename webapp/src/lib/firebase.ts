@@ -15,6 +15,9 @@ import {
 	Timestamp,
 	addDoc,
 	QueryDocumentSnapshot,
+    DocumentReference,
+    Firestore,
+    Query,
 } from 'firebase/firestore';
 import { NameState } from './tibia_client';
 import {
@@ -25,11 +28,13 @@ import {
 	signOut,
     type Unsubscribe,
     GoogleAuthProvider,
-    signInWithRedirect
+    signInWithRedirect,
+    type Auth
 } from 'firebase/auth';
 import { get, readable, writable, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import {onMessage,  getToken, getMessaging} from 'firebase/messaging';
+import { init } from 'svelte/internal';
 
 export const firebaseConfig = {
 	apiKey: 'AIzaSyA7Zj56RE-zq3NuVU1QeZuXP8_RPFxlNRY',
@@ -65,16 +70,25 @@ type ExpiringName = {
 	userUid: string,
 }
 
-const playerConverter = {
-  toFirestore: (data: Player) => data,
-  fromFirestore:(doc: QueryDocumentSnapshot) => doc.data() as Player
-}
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+export const db = getFirestore(app);
+export const auth = getAuth(app);
 
-export const userStore = createAuthStore();
+
+const converter = <T>() => ({
+  toFirestore: (data: Partial<T>) => data,
+  fromFirestore: (snap: QueryDocumentSnapshot) => {
+	return {id: snap.id, ...snap.data()} as T}
+});
+
+const typedCollection = <T>(collectionPath: string) => collection(db, collectionPath).withConverter(converter<T>())
+
+const expiringNamesCollection = typedCollection<ExpiringName>("expiring_names");
+const playersCollection = typedCollection<Player>("players");
+const trackingPlayerCollection = typedCollection<TrackingPlayer>("tracking_players")
+
+export const userStore = createUserStore(auth);
 export const expiringNamesStore = createExpiringNameStore();
 export const friendListStore = createFriendListStore();
 export const profileStore = createProfileStore();
@@ -86,20 +100,11 @@ if (browser) {
 	});
 }
 
-function createAuthStore() {
-  const { subscribe } = readable<User | null>(undefined, set => {
-    let unsubscribe: Unsubscribe = () => null 
-
-    async function init() {
-      if (browser) {
-        unsubscribe = onAuthStateChanged(auth, (user) => set(user))
-      }
-    }
-
-    init()
-
-    return unsubscribe
-  })
+function createUserStore(auth: Auth) {
+	const { subscribe } = readable<User | null>(auth.currentUser, set => {
+		const unsubscribe = onAuthStateChanged(auth, (user) => set(user));
+		return () => unsubscribe();
+  });
 
   async function login() {
     await signInWithRedirect(auth, new GoogleAuthProvider())
@@ -122,24 +127,22 @@ function createFriendListStore() {
 	// let unsubscribeTracking: Unsubscribe = () => null TODO add listener on trackingcollection so that we online resubscribe when deleting instead of recreating the entire set
 	const {subscribe, set } = writable<Player[]>([]);
 
-	const playersCollection = collection(db, "players").withConverter(playerConverter);
 	const trackingCollection = collection(db, "tracking_players");
 
 	async function realtimeSubscription() {
 		unsubscribe()
 		const uid = auth.currentUser?.uid
-		const q = query(trackingCollection, where("userUid", "==", uid))
+		const q = query(trackingPlayerCollection, where("userUid", "==", uid))
 		const docs = await getDocs(q);
-		const names = docs.docs.map((doc) => { 
-			return 	(doc.data() as TrackingPlayer).player
-		});
+		const names = docs.docs.map((doc) => doc.data().player);
 		if (names.length == 0) {
 			set([])
 			return;
 		}
+
 		const playerQuery = query(playersCollection, where("name", 'in', names));
-		const playersDocs = await getDocs(playerQuery);
-		const players = playersDocs.docs.map((doc) => doc.data());
+		const playersDocs  = await getDocs(playerQuery);
+		const players = playersDocs.docs.map((doc) => doc.data() as Player);
 		set(players)
 		
 		unsubscribe = onSnapshot(playerQuery, (querySnapshot: QuerySnapshot) => {
@@ -155,8 +158,8 @@ function createFriendListStore() {
 	return {
 		subscribe,
 		add: async (name: string, world: string) =>  {
-		const userUid = auth.currentUser?.uid
-		await addDoc(trackingCollection, {
+			const userUid = getUserUid();
+			await addDoc(trackingCollection, {
 				player: name,
 				userUid
 			});
@@ -164,7 +167,7 @@ function createFriendListStore() {
 				name,
 				world,
 				status: "offline" // TODO not set unknown to everybody
-				}, {merge: true});
+			}, {merge: true});
 
 			realtimeSubscription();
 		},
@@ -197,10 +200,10 @@ function createExpiringNameStore() {
 
 	return {
 		subscribe,
-		add: async (name: string) => {
-			const uid = get(userStore)?.uid 
-		const now = new Date();
-		await addDoc(collection(db, 'expiring_names'), {
+			add: async (name: string) => {
+			const uid = getUserUid();
+			const now = new Date();
+			await addDoc(collection(db, 'expiring_names'), {
 				name,
 				status: NameState[NameState.expiring],
 				lastChecked: now,
@@ -213,8 +216,7 @@ function createExpiringNameStore() {
 		},
 		load: async () => {
 			const uid = auth.currentUser?.uid
-			const collections = collection(db, 'expiring_names');
-			const q = query(collections, where("userUid", "==", uid))
+			const q = query(expiringNamesCollection, where("userUid", "==", uid))
 			const docs = await getDocs(q);
 			const formerNames = docs.docs.map((doc) =>{ return {id:doc.id,...doc.data()} as ExpiringName});
 			set(formerNames)
@@ -236,15 +238,17 @@ type PalUser = {
 	enableNotificationEmail: boolean,
 }
 
+function getUserUid() {
+	return get(userStore)!.uid
+}
+
 function createProfileStore() {
 	let unsubscribe: Unsubscribe = () => null;
 
 	const { subscribe, set } = writable<PalUser>({notificationEmails:'', enableNotificationEmail:false})
-
-	return {
-		subscribe,
+return { subscribe,
 		load: async () => {
-			const uid = get(userStore)!.uid 
+			const uid = getUserUid(); 
 			const docRef = doc(db, 'users', uid)
 			const docSnapshot = await getDoc(docRef)
 			set(docSnapshot.data() as PalUser);
@@ -254,7 +258,7 @@ function createProfileStore() {
 			});
 		},
 		save: async (enableNotificationEmail: boolean, notificationEmails: string) => {
-			const uid = get(userStore)!.uid 
+			const uid = getUserUid(); 
 			await setDoc(doc(db, 'users', uid), {
 				enableNotificationEmail,
 				notificationEmails,
