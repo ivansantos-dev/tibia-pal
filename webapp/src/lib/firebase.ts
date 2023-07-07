@@ -170,12 +170,12 @@ function createExpiringNameStore() {
 		subscribe,
 		add: async (name: string) => {
 			const uid = get(userStore)?.uid 
-		const now = new Date().getTime();
+		const now = new Date();
 		await addDoc(collection(db, 'expiring_names'), {
 				name,
 				status: NameState[NameState.expiring],
 				lastChecked: now,
-				nextCheck: new Date(now + 1 * 60 * 60 * 1000),
+				nextCheck: new Date(now.getTime() + 1 * 60 * 60 * 1000),
 				userUid: uid,
 			});
 		},
