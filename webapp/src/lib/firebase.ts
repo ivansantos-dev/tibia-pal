@@ -23,9 +23,11 @@ import {
 	signInWithEmailAndPassword,
 	getAuth,
 	signOut,
-    type Unsubscribe
+    type Unsubscribe,
+    GoogleAuthProvider,
+    signInWithRedirect
 } from 'firebase/auth';
-import { get, writable, type Writable } from 'svelte/store';
+import { get, readable, writable, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import {onMessage,  getToken, getMessaging} from 'firebase/messaging';
 
@@ -72,21 +74,48 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export const userStore: Writable<User | null> = writable(null);
+export const userStore = createAuthStore();
 export const expiringNamesStore = createExpiringNameStore();
 export const friendListStore = createFriendListStore();
 export const profileStore = createProfileStore();
 
 if (browser) {
-	onAuthStateChanged(auth, (user) => {
-		userStore.set(user);
-	});
-
 	const messaging = getMessaging(app);
 	onMessage(messaging, (payload) => {
 		new Notification('Tibia Pal Internal', payload.notification)
 	});
 }
+
+function createAuthStore() {
+  const { subscribe } = readable<User | null>(undefined, set => {
+    let unsubscribe: Unsubscribe = () => null 
+
+    async function init() {
+      if (browser) {
+        unsubscribe = onAuthStateChanged(auth, (user) => set(user))
+      }
+    }
+
+    init()
+
+    return unsubscribe
+  })
+
+  async function login() {
+    await signInWithRedirect(auth, new GoogleAuthProvider())
+  }
+
+  async function logout() {
+    await signOut(auth)
+  }
+
+  return {
+    subscribe,
+    login,
+    logout,
+  }
+}
+
 
 function createFriendListStore() {
 	let unsubscribe: Unsubscribe = () => null

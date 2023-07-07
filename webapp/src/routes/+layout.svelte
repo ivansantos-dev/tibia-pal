@@ -3,7 +3,7 @@
 	import '@skeletonlabs/skeleton/styles/skeleton.css';
 	import '../app.postcss';
 
-	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
+	import { AppShell, AppBar, ProgressRadial } from '@skeletonlabs/skeleton';
 	import Login from '$lib/Login.svelte';
 	import Logout from '$lib/Logout.svelte';
 	import { userStore } from '$lib/firebase';
@@ -28,7 +28,11 @@
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
-	{#if !$userStore}
+	{#if $userStore === undefined}
+		<div class="flex items-center justify-center h-screen">
+		<ProgressRadial />
+		</div>
+	{:else if $userStore === null}
 		<Login />
 	{:else}
 		<slot />
