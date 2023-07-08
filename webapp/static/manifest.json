@@ -3,7 +3,8 @@
 	"short_name": "TibiaBuddyList",
 	"start_url": ".",
 	"display": "standalone",
-	"background_color": "#fff",
+	"background_color": "#231631",
+	"theme_color": "#231631",
 	"description": "Tibia Buddy List WebApp",
 	"icons": [
 		{
