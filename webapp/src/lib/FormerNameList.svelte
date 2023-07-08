@@ -33,7 +33,7 @@
 		await expiringNamesStore.delete(expiring_name.id);
 	}
 	const popupHover: PopupSettings = {
-		event: 'click',
+		event: 'focus-click',
 		target: 'popupHover',
 		placement: 'top'
 	};
@@ -60,14 +60,14 @@
 							<td>{row.name}</td>
 							<td>{row.status}</td>
 							<td>
-								<button class="btn variant-filled [&>*]:pointer-events-none" use:popup={popupHover}>
+								<button class="btn variant-soft"  use:popup={popupHover}>
 									<span ><Icon icon="mdi:information-outline" /></span>
 								</button>
-								<div class="card p-4 variant-filled" data-popup="popupHover">
+								<div class="card p-4 variant-filled-surface" data-popup="popupHover">
 									<p>
 										Last Checked: {row.lastChecked?.toDate().toLocaleString()}
 									</p>
-									<div class="arrow variant-filled" />
+									<div class="arrow variant-filled-surface" />
 								</div>
 							</td>
 							<td

@@ -30,6 +30,7 @@
 				{#if $userStore}
 					<a href="/">Home</a>
 					<a href="/profile">Profile</a>
+					<a href="/faq">FAQ</a>
 					<Logout />
 				{/if}
 			</svelte:fragment>

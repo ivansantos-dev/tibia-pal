@@ -190,7 +190,7 @@ export const notifyOnPlayerChanges = onDocumentUpdated("players/{playerName}", a
 
     const message = {
       notification: {
-        title: "Buddy List",
+        title: "VIP List",
         body: `${playerName} is ${newPlayerDoc.status}` 
       },
       tokens,
