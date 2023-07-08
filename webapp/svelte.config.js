@@ -12,7 +12,7 @@ const config = {
 		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
 		adapter: adapter(),
 		files: {
-			serviceWorker: 'firebase-messaging-sw.js',
+			serviceWorker: 'firebase-messaging-sw.js'
 		}
 	}
 };

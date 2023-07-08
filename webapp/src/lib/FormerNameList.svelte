@@ -1,22 +1,22 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { getCharacterFromTibia, NameState } from '$lib/tibia_client';
-	import {expiringNamesStore } from '$lib/firebase';
+	import { expiringNamesStore } from '$lib/firebase';
 	import Icon from '@iconify/svelte';
-
 
 	onMount(async () => {
 		expiringNamesStore.load();
 	});
-	
+
 	onDestroy(() => {
-		expiringNamesStore.destroy(); });
+		expiringNamesStore.destroy();
+	});
 
 	let searchCharacterName = '';
 
 	async function add() {
 		const character = await getCharacterFromTibia(searchCharacterName);
-		const nameState = character.nameState
+		const nameState = character.nameState;
 		if (character.nameState !== NameState.expiring) {
 			alert(`${searchCharacterName} is ${NameState[nameState]}!`);
 			return;
@@ -54,11 +54,9 @@
 							<td>{row.status}</td>
 							<td>{row.lastChecked?.toDate().toLocaleString()}</td>
 							<td
-								><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}
-									>
+								><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}>
 									<Icon icon="mdi:trash" />
-								</button
-								>
+								</button>
 							</td>
 						</tr>
 					{/each}
@@ -66,18 +64,16 @@
 			</table>
 		</div>
 	</section>
-	
-	<footer class="card-footer">
 
+	<footer class="card-footer">
 		{#if $expiringNamesStore.length < 3}
 			<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
 				<div class="input-group-shim"><Icon icon="mdi:search" /></div>
-				<input type="search" placeholder="Search..." 
-					bind:value={searchCharacterName} />
+				<input type="search" placeholder="Search..." bind:value={searchCharacterName} />
 				<button class="variant-filled" on:click={add}>Add</button>
 			</div>
 		{:else}
-		<em>You can only track up to 3 player names</em>
+			<em>You can only track up to 3 player names</em>
 		{/if}
 	</footer>
 </div>

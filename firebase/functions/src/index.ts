@@ -190,7 +190,7 @@ export const notifyOnPlayerChanges = onDocumentUpdated("players/{playerName}", a
 
     const message = {
       notification: {
-        title: "Tibia Friend Tracker",
+        title: "Buddy List",
         body: `${playerName} is ${newPlayerDoc.status}` 
       },
       tokens,

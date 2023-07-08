@@ -6,7 +6,7 @@
 <div class="flex justify-center items-center h-screen">
 	<div class="card p-4">
 		<header class="card-header">
-			<h1 class="h1">Sign In</h1> 
+			<h1 class="h1">Sign In</h1>
 		</header>
 		<section class="p-10">
 			<button type="button" class="btn variant-filled" on:click={userStore.login}>

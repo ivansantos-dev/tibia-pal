@@ -5,12 +5,12 @@ export enum NameState {
 	error
 }
 
-type TibiaApiCharacter =  {
-	name: string,
-	world: string,
-	expiring: boolean,
-	nameState: NameState
-}
+type TibiaApiCharacter = {
+	name: string;
+	world: string;
+	expiring: boolean;
+	nameState: NameState;
+};
 
 export async function getCharacterFromTibia(name: string): Promise<TibiaApiCharacter> {
 	const response = await fetch(`https://api.tibiadata.com/v3/character/${name}`);
@@ -25,7 +25,7 @@ export async function getCharacterFromTibia(name: string): Promise<TibiaApiChara
 
 	const apiName: string = data.characters.character.name;
 	if (apiName === '') {
-		nameState =  NameState.available;
+		nameState = NameState.available;
 	}
 
 	const lowerName = name.toLowerCase();
@@ -33,19 +33,19 @@ export async function getCharacterFromTibia(name: string): Promise<TibiaApiChara
 		nameState = NameState.not_found;
 	}
 
-	let formerNames: string[] = []
+	let formerNames: string[] = [];
 	const apiFormerName: string[] = data.characters.character.former_names;
 	if (apiFormerName != undefined) {
 		formerNames = apiFormerName.map((name: string) => name.toLowerCase());
 		if (formerNames.includes(lowerName)) {
-			nameState =  NameState.expiring;
+			nameState = NameState.expiring;
 		}
 	}
 
-	return	{
+	return {
 		name: apiName,
 		world: data.characters.character.world,
 		expiring: nameState === NameState.expiring,
 		nameState: nameState
-	}
+	};
 }

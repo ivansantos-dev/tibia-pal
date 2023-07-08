@@ -7,7 +7,7 @@
 	onMount(async () => {
 		friendListStore.load();
 	});
-	
+
 	onDestroy(() => {
 		friendListStore.destroy();
 	});
@@ -16,13 +16,13 @@
 
 	async function add() {
 		const name = await getCharacterFromTibia(searchFriendName);
-		const nameState = name.nameState
+		const nameState = name.nameState;
 
 		if (nameState !== NameState.not_found) {
 			alert(`${searchFriendName} is ${NameState[nameState]}!`);
 			return;
 		}
-		await friendListStore.add(searchFriendName, name.world)
+		await friendListStore.add(searchFriendName, name.world);
 		searchFriendName = '';
 	}
 
@@ -53,18 +53,16 @@
 							<td>{row.name}</td>
 							<td>{row.world}</td>
 							<td>
-								{#if row.status == "offline"}
+								{#if row.status == 'offline'}
 									<strong class="text-red-500">{row.status}</strong>
 								{:else}
 									<strong class="text-green-500">{row.status}</strong>
 								{/if}
 							</td>
 							<td
-								><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}
-									>
+								><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}>
 									<Icon icon="mdi:trash" />
-								</button
-								>
+								</button>
 							</td>
 						</tr>
 					{/each}
@@ -76,14 +74,11 @@
 		{#if $friendListStore.length < 3}
 			<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
 				<div class="input-group-shim"><Icon icon="mdi:search" /></div>
-				<input type="search" placeholder="Search..." 
-					bind:value={searchFriendName} />
+				<input type="search" placeholder="Search..." bind:value={searchFriendName} />
 				<button class="variant-filled" on:click={add}>Add</button>
 			</div>
 		{:else}
-		<em>You can only track up to 3 player names</em>
+			<em>You can only track up to 3 player names</em>
 		{/if}
 	</footer>
 </div>
-				
-	

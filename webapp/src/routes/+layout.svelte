@@ -21,22 +21,22 @@
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				{#if $userStore}
-					<a href='/'>Home</a>
-					<a href='/profile'>Profile</a>
+					<a href="/">Home</a>
+					<a href="/profile">Profile</a>
 					<Logout />
 				{/if}
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
-		{#if $userStore === undefined}
-			<div class="flex justify-center items-center h-screen mx-4">
-				<ProgressRadial />
-			</div>
-		{:else if $userStore === null}
-			<Login />
-		{:else}
-			<slot />
-		{/if}
+	{#if $userStore === undefined}
+		<div class="flex justify-center items-center h-screen mx-4">
+			<ProgressRadial />
+		</div>
+	{:else if $userStore === null}
+		<Login />
+	{:else}
+		<slot />
+	{/if}
 
 	<svelte:fragment slot="pageFooter">
 		<AppBar>
