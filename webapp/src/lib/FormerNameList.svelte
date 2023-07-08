@@ -33,7 +33,7 @@
 		await expiringNamesStore.delete(expiring_name.id);
 	}
 	const popupHover: PopupSettings = {
-		event: 'focus-click',
+		event: 'click',
 		target: 'popupHover',
 		placement: 'top'
 	};

@@ -96,7 +96,7 @@ if (browser) {
 }
 
 function createUserStore(auth: Auth) {
-	const { subscribe } = readable<User | null>(auth.currentUser, (set) => {
+	const { subscribe } = readable<User | null>(undefined, (set) => {
 		const unsubscribe = onAuthStateChanged(auth, (user) => set(user));
 		return () => unsubscribe();
 	});

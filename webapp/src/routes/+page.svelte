@@ -3,7 +3,7 @@
 	import FormerNameList from '$lib/FormerNameList.svelte';
 </script>
 
-<div class="flex flex-col gap-8 justify-center items-center h-screen border-black">
+<div class="flex flex-col gap-8 justify-center items-center h-screen">
 	<div>
 		<BuddyList />
 	</div>
