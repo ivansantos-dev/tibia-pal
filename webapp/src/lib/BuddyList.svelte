@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { getCharacterFromTibia, NameState } from '$lib/tibia_client';
 	import { friendListStore } from '$lib/firebase';
 	import Icon from '@iconify/svelte';
+	import { modalStore, type ModalSettings, Modal, type ModalComponent } from '@skeletonlabs/skeleton';
+	import ModalAddFormerName from './ModalAddFormerName.svelte';
 
 	onMount(async () => {
 		friendListStore.load();
@@ -15,15 +16,20 @@
 	let searchFriendName = '';
 
 	async function add() {
-		const name = await getCharacterFromTibia(searchFriendName);
-		const nameState = name.nameState;
-
-		if (nameState !== NameState.not_found) {
-			alert(`${searchFriendName} is ${NameState[nameState]}!`);
-			return;
+		if (searchFriendName === '') {
+			return
 		}
-		await friendListStore.add(searchFriendName, name.world);
-		searchFriendName = '';
+
+		const modalComponent: ModalComponent = {
+			ref: ModalAddFormerName,
+			props: { playerName: searchFriendName },
+		};
+
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+		};
+		modalStore.trigger(modal);
 	}
 
 	async function remove(idx: number) {
@@ -32,9 +38,11 @@
 	}
 </script>
 
+<Modal />
+
 <div class="card">
 	<header class="card-header">
-		<h2 class="h2 pb-4">Buddy List</h2>
+		<h2 class="h2 pb-4">VIP List</h2>
 	</header>
 	<section class="p-4">
 		<div class="table-container">
@@ -75,7 +83,7 @@
 			<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
 				<div class="input-group-shim"><Icon icon="mdi:search" /></div>
 				<input type="search" placeholder="Search..." bind:value={searchFriendName} />
-				<button class="variant-filled" on:click={add}>Add</button>
+				<button class="variant-filled" on:click={add}>Search</button>
 			</div>
 		{:else}
 			<em>You can only track up to 3 player names</em>

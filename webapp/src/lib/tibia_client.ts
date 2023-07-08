@@ -5,8 +5,9 @@ export enum NameState {
 	error
 }
 
-type TibiaApiCharacter = {
+export type TibiaApiCharacter = {
 	name: string;
+	formerNames: string[];
 	world: string;
 	expiring: boolean;
 	nameState: NameState;
@@ -19,7 +20,6 @@ export async function getCharacterFromTibia(name: string): Promise<TibiaApiChara
 	let nameState = NameState.not_found;
 	if (!response.ok) {
 		alert('failed to reach tibiadata');
-		console.error(response);
 		nameState = NameState.error;
 	}
 
@@ -43,7 +43,8 @@ export async function getCharacterFromTibia(name: string): Promise<TibiaApiChara
 	}
 
 	return {
-		name: apiName,
+		name: data.characters.character.name,
+		formerNames: data.characters.character.formerNames,
 		world: data.characters.character.world,
 		expiring: nameState === NameState.expiring,
 		nameState: nameState
