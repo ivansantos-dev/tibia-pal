@@ -7,6 +7,13 @@
 	import Login from '$lib/Login.svelte';
 	import Logout from '$lib/Logout.svelte';
 	import { userStore } from '$lib/firebase';
+
+	// Imports for popup
+	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
+	import { storePopup } from '@skeletonlabs/skeleton';
+	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
+			
+
 </script>
 
 <svelte:head>

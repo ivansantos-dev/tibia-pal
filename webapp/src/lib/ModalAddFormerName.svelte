@@ -7,7 +7,6 @@
 	export let playerName: string
 	let player: TibiaApiCharacter = undefined 
 
-
 	onMount(async () => {
 		player = await getCharacterFromTibia(playerName);
 	});

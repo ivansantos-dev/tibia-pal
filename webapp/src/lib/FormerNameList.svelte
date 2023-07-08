@@ -3,6 +3,8 @@
 	import { getCharacterFromTibia, NameState } from '$lib/tibia_client';
 	import { expiringNamesStore } from '$lib/firebase';
 	import Icon from '@iconify/svelte';
+	import { popup } from '@skeletonlabs/skeleton';
+	import type { PopupSettings } from '@skeletonlabs/skeleton';
 
 	onMount(async () => {
 		expiringNamesStore.load();
@@ -30,6 +32,11 @@
 		const expiring_name = $expiringNamesStore[idx];
 		await expiringNamesStore.delete(expiring_name.id);
 	}
+	const popupHover: PopupSettings = {
+		event: 'click',
+		target: 'popupHover',
+		placement: 'top'
+	};
 </script>
 
 <div class="card">
@@ -43,7 +50,7 @@
 					<tr>
 						<th>Name</th>
 						<th>Status</th>
-						<th>Last Checked</th>
+						<th><span /></th>
 						<th><span /></th>
 					</tr>
 				</thead>
@@ -52,7 +59,17 @@
 						<tr>
 							<td>{row.name}</td>
 							<td>{row.status}</td>
-							<td>{row.lastChecked?.toDate().toLocaleString()}</td>
+							<td>
+								<button class="btn variant-filled [&>*]:pointer-events-none" use:popup={popupHover}>
+									<span ><Icon icon="mdi:information-outline" /></span>
+								</button>
+								<div class="card p-4 variant-filled" data-popup="popupHover">
+									<p>
+										Last Checked: {row.lastChecked?.toDate().toLocaleString()}
+									</p>
+									<div class="arrow variant-filled" />
+								</div>
+							</td>
 							<td
 								><button type="button" class="btn variant-filled-error" on:click={() => remove(i)}>
 									<Icon icon="mdi:trash" />
