@@ -8,8 +8,7 @@
 	]
 
 </script>
-<div class="flex items-center justify-center">
-	<div class="card m-4 mx:w-[70%]">
+	<div class="card">
 		<Accordion>
 			{#each data as row}
 			<AccordionItem>
@@ -19,4 +18,3 @@
 			{/each}
 		</Accordion>
 	</div>
-</div>

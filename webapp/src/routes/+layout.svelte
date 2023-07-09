@@ -5,7 +5,6 @@
 
 	import { AppShell, AppBar, ProgressRadial } from '@skeletonlabs/skeleton';
 	import Login from '$lib/Login.svelte';
-	import Logout from '$lib/Logout.svelte';
 	import { userStore } from '$lib/firebase';
 
 	// Imports for popup
@@ -24,27 +23,27 @@
 	<svelte:fragment slot="header">
 		<AppBar>
 			<svelte:fragment slot="lead">
-				<strong class="text-xl uppercase">Tibia Buddy List</strong>
+				<a href="/" class="font-bold text-xl uppercase">Tibia Buddy</a>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				{#if $userStore}
-					<a href="/">Home</a>
-					<a href="/profile">Profile</a>
 					<a href="/faq">FAQ</a>
-					<Logout />
+					<a href="/settings">Settings</a>
 				{/if}
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
+	<div class="flex flex-col items-center h-screen m-4 w-fit sm:w-[50%] ">
 	{#if $userStore === undefined}
-		<div class="flex justify-center items-center h-screen mx-4">
 			<ProgressRadial />
-		</div>
 	{:else if $userStore === null}
 		<Login />
 	{:else}
-		<slot />
+			<div class="container">
+				<slot />
+			</div>
 	{/if}
+	</div>
 
 	<svelte:fragment slot="pageFooter">
 		<AppBar>

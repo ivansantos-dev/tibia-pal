@@ -2,7 +2,7 @@
 	import { profileStore } from '$lib/firebase';
 	import { onDestroy, onMount } from 'svelte';
 	import { SlideToggle } from '@skeletonlabs/skeleton';
-	import { where } from 'firebase/firestore';
+	import Logout from '$lib/Logout.svelte';
 
 	let notificationEmails = '';
 	let enableEmailNotification = false;
@@ -16,7 +16,7 @@
 	}
 
 	function testNotification() {
-		new Notification('Tibia Pal', { body: 'This is a test notification', icon: '/favicon.ico' });
+		new Notification('Tibia Buddy List', { body: 'This is a test notification!', icon: '/favicon.ico' });
 	}
 
 	onMount(async () => {
@@ -30,14 +30,20 @@
 	});
 </script>
 
-<div class="card max-w-2xl mx-auto p-8 m-4">
+	<h1 class="h1">Settings</h1>
+
+	<h2 class="h2">Notification</h2>
 	<button class="btn variant-filled mb-4" on:click={requestPermission}>Request Permission</button>
 	<button class="btn variant-filled-surface mb-4" on:click={testNotification}
 		>Test Notification</button
 	>
+
+	<hr class="border-black" />
+
+	<h2 class="h2">Notification</h2>
 	<form>
 		<SlideToggle name="slide" bind:checked={enableEmailNotification}
-			>Enable Email Notification</SlideToggle
+			>Enable Email Notification for Former Name tracking</SlideToggle
 		>
 		<label class="label">
 			<span>Notification Emails</span>
@@ -51,4 +57,6 @@
 
 		<button class="btn variant-filled mt-10" on:click={save}>Save</button>
 	</form>
-</div>
+	<hr class="border-black" />
+	<Logout />
+
