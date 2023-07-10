@@ -25,7 +25,8 @@ import {
 	type Unsubscribe,
 	GoogleAuthProvider,
 	type Auth,
-	signInWithPopup
+	signInWithPopup,
+    deleteUser
 } from 'firebase/auth';
 import { get, readable, writable } from 'svelte/store';
 import { browser } from '$app/environment';
@@ -65,6 +66,19 @@ type ExpiringName = {
 	userUid: string;
 };
 
+export type UserSettings = {
+	enableEmailNotification: boolean,
+	emailSettings: {
+		emails: string, 
+		enableFormerNames: boolean,
+	},
+	enablePushNotification: boolean,
+	pushSettings: {
+		enableFormerNames: boolean,
+		enableVipList: boolean,
+	}	
+}
+
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
@@ -103,9 +117,11 @@ function createUserStore(auth: Auth) {
 
 	async function login() {
 		await signInWithPopup(auth, new GoogleAuthProvider());
+		profileStore.sendToken();
 	}
 
 	async function logout() {
+		profileStore.deleteToken()
 		await signOut(auth);
 	}
 
@@ -235,11 +251,6 @@ function createExpiringNameStore() {
 	};
 }
 
-type PalUser = {
-	notificationEmails: string;
-	enableNotificationEmail: boolean;
-};
-
 function getUserUid() {
 	return get(userStore)!.uid;
 }
@@ -247,9 +258,17 @@ function getUserUid() {
 function createProfileStore() {
 	let unsubscribe: Unsubscribe = () => null;
 
-	const { subscribe, set } = writable<PalUser>({
-		notificationEmails: '',
-		enableNotificationEmail: false
+	const { subscribe, set } = writable<UserSettings>({
+		enableEmailNotification:  false,
+		emailSettings: {
+			emails: '', 
+			enableFormerNames: true,
+		},
+		enablePushNotification:  false,
+		pushSettings: {
+			enableFormerNames: true,
+			enableVipList: true,
+		}	
 	});
 	return {
 		subscribe,
@@ -257,45 +276,43 @@ function createProfileStore() {
 			const uid = getUserUid();
 			const docRef = doc(db, 'users', uid);
 			const docSnapshot = await getDoc(docRef);
-			set(docSnapshot.data() as PalUser);
+			const userSettings = docSnapshot.data() as UserSettings;
+			set(userSettings);
+			return userSettings; 
 
-			unsubscribe = onSnapshot(docRef, (doc) => {
-				set(doc.data() as PalUser);
-			});
+			// unsubscribe = onSnapshot(docRef, (doc) => {
+			// 	set(doc.data() as UserSettings);
+			// });
 		},
-		save: async (enableNotificationEmail: boolean, notificationEmails: string) => {
+		save: async (settings: UserSettings) => {
 			const uid = getUserUid();
-			await setDoc(doc(db, 'users', uid), {
-				enableNotificationEmail,
-				notificationEmails
-			});
+			await setDoc(doc(db, 'users', uid),	settings);
 		},
-		notificationRequestPermission: () => {
-			Notification.requestPermission().then((permission) => {
-				if (permission !== 'granted') {
-					console.debug('permission not granted');
-					return;
-				}
-				const messaging = getMessaging();
-				getToken(messaging, firebaseMessagingConfig)
-					.then(async (currentToken) => {
-						if (currentToken) {
-							const userUid = get(userStore)!.uid;
-							await setDoc(
-								doc(db, 'notification_tokens', currentToken),
-								{ userUid },
-								{ merge: true }
-							);
-						} else {
-							alert('No registration token available. Request permission to generate one.');
-						}
-					})
-					.catch((err) => {
-						console.log(err);
-						alert('An error occurred while retrieving token');
-					});
-			});
+		sendToken: async () => {
+			const messaging = getMessaging(app);
+			const currentToken = await getToken(messaging, firebaseMessagingConfig);
+			if (currentToken) {
+				const userUid = getUserUid();
+				await setDoc(
+					doc(db, `users/${userUid}/device_tokens`, currentToken),
+					{ token: currentToken, created: new Date() },
+					{ merge: true }
+				);
+			} else {
+				alert('No registration token available. Request permission to generate one.');
+			}
 		},
+		deleteToken: async () => {
+			const messaging = getMessaging(app);
+			const userUid = getUserUid();
+			const currentToken = await getToken(messaging, firebaseMessagingConfig);
+			if (currentToken) {
+				await deleteDoc(doc(db, `users/${userUid}/device_tokens`, currentToken));
+			}
+		},
+		deleteAccount: async () => {
+			await deleteUser(auth.currentUser!);
+			},
 		destroy: () => {
 			unsubscribe();
 		}

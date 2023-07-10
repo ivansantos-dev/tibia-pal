@@ -1,28 +1,57 @@
 <script lang="ts">
-	import { profileStore } from '$lib/firebase';
+	import { profileStore, type UserSettings } from '$lib/firebase';
 	import { onDestroy, onMount } from 'svelte';
 	import { SlideToggle } from '@skeletonlabs/skeleton';
 	import Logout from '$lib/Logout.svelte';
 
-	let notificationEmails = '';
-	let enableEmailNotification = false;
+	let notificationError: string | null = null;
+
+	let settings: UserSettings = {
+		enableEmailNotification: false,
+		emailSettings: {
+			emails: '', 
+			enableFormerNames: true,
+		},
+		enablePushNotification: false,
+		pushSettings: {
+			enableFormerNames: true,
+			enableVipList: true,
+		}	
+	};
 
 	async function save() {
-		profileStore.save(enableEmailNotification, notificationEmails);
+		profileStore.save(settings);
 	}
 
-	async function requestPermission() {
-		profileStore.notificationRequestPermission();
+	async function changePermission() {
+		if (!settings.enablePushNotification) {
+			profileStore.deleteToken();
+			return;
+		}
+		
+		if (!("Notification" in window)) {
+			notificationError = "This browser does not support notification"
+		} else if (Notification.permission === "denied") {
+			notificationError = "To get notifications, you’ll need to allow them in your browser settings first."
+		} else {
+			let permission = await Notification.requestPermission();
+			if (permission === "granted") {
+				profileStore.sendToken();
+				settings.enablePushNotification = true;
+				return;
+			} else if (permission === "denied") {
+				notificationError = "To get notifications, you’ll need to allow them in your browser settings first."
+			}
+		}
+		settings.enablePushNotification = false;
 	}
 
-	function testNotification() {
-		new Notification('Tibia Buddy List', { body: 'This is a test notification!', icon: '/favicon.ico' });
+	async function deleteAccount() {
+		await profileStore.deleteAccount()	
 	}
 
 	onMount(async () => {
-		profileStore.load();
-		notificationEmails = $profileStore.notificationEmails;
-		enableEmailNotification = $profileStore.enableNotificationEmail;
+		settings = await profileStore.load();
 	});
 
 	onDestroy(async () => {
@@ -30,33 +59,53 @@
 	});
 </script>
 
-	<h1 class="h1">Settings</h1>
+<h1 class="h1">Settings</h1>
+<hr />
 
-	<h2 class="h2">Notification</h2>
-	<button class="btn variant-filled mb-4" on:click={requestPermission}>Request Permission</button>
-	<button class="btn variant-filled-surface mb-4" on:click={testNotification}
-		>Test Notification</button
+<div class="flex flex-col gap-4">
+	<h2 class="h2">Notifications</h2>
+	<SlideToggle name="slide" bind:checked={settings.enablePushNotification} on:change={changePermission}>Push Notifications</SlideToggle>
+	{#if settings.enablePushNotification}
+		<div class="space-y-2">
+			<label class="flex items-center space-x-2">
+				<input class="checkbox" type="checkbox" bind:checked={settings.pushSettings.enableVipList} />
+				<p>VIP List</p>
+			</label>
+			<label class="flex items-center space-x-2">
+				<input class="checkbox" type="checkbox" bind:checked={settings.pushSettings.enableFormerNames} />
+				<p>Expiring Names</p>
+			</label>
+		</div>
+	{/if}
+
+	<SlideToggle name="slide" bind:checked={settings.enableEmailNotification}>Emails</SlideToggle
 	>
-
-	<hr class="border-black" />
-
-	<h2 class="h2">Notification</h2>
-	<form>
-		<SlideToggle name="slide" bind:checked={enableEmailNotification}
-			>Enable Email Notification for Former Name tracking</SlideToggle
-		>
+	{#if settings.enableEmailNotification}
 		<label class="label">
 			<span>Notification Emails</span>
 			<input
 				class="input"
 				type="text"
 				placeholder="notify-me@gmail.com,notify-me2@gmail.com"
-				bind:value={notificationEmails}
+				bind:value={settings.emailSettings.emails}
 			/>
 		</label>
+		<div class="space-y-2">
+			<label class="flex items-center space-x-2">
+				<input class="checkbox" type="checkbox" bind:checked={settings.emailSettings.enableFormerNames} />
+				<p>Expiring Names</p>
+			</label>
+		</div>
+	{/if}
+	<button class="btn variant-filled mt-10" on:click={save}>Save</button>
 
-		<button class="btn variant-filled mt-10" on:click={save}>Save</button>
-	</form>
-	<hr class="border-black" />
-	<Logout />
-
+		<Logout />
+		<button class="btn variant-filled-error" on:click={deleteAccount}>Delete Account</button>
+</div>
+{#if notificationError} 
+	<div class="p-8">
+		<aside class="alert variant-ghost-error">
+			<p>{notificationError}</p>
+		</aside>
+	</div>
+{/if}
